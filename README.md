@@ -13,4 +13,4 @@ The algorithm is due to [H. T. Huynh](https://scholar.google.com/citations?user=
 - cd into repo dir
 - `uv sync`
 - `uv run pytest`
-- Check out the plots in the `plots` subdirectory
+- Check out the plots this will generate in the `plots` subdirectory
