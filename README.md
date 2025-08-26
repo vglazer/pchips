@@ -31,5 +31,5 @@ The algorithm is due to [H. T. Huynh](https://scholar.google.com/citations?user=
   - The "monotone convex" spline proposed by [Hagan and West](https://www.deriscope.com/docs/Hagan_West_curves_AMF.pdf) in the context of forward curve construction also suffers from this problem
 - [H.T. Huynh's interpolant](https://ntrs.nasa.gov/api/citations/19910011517/downloads/19910011517.pdf), which is implemented here, effectively relaxes the monotonicty constraint near strict local extrema:
   - This results in a uniformly 4th order accurate interpolant - the best you can do with a cubic - which preserves monotonicity without imposing it
-  - It's quite nice looking as well
+  - It's quite nice to look at as well
 - The modified Akima or ["Makima" interpolant](https://blogs.mathworks.com/cleve/2019/04/29/makima-piecewise-cubic-interpolation/) which is implemented by SciPy's [Akima1DInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.Akima1DInterpolator.html#scipy.interpolate.Akima1DInterpolator) uses a different methodology, but also attempts to produce an interpolant which "appears natural" and avoids "slicing"
