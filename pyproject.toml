@@ -6,8 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pchips"
 version = "1.0.0"
 authors = [
-  { name="Victor Glazer" },
-  { name="Christina C. Christara" },
+  { name="Victor Glazer" }
 ]
 description = "A Python implementation of monotonicity-preserving piecewise cubic Hermite interpolation."
 readme = "README.md"
