@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 import matplotlib.pyplot as plt
-#from pchips import PchipInterpolator
 import pchips
 import scipy.interpolate as interpolate
 from pathlib import Path
