@@ -64,12 +64,12 @@ def test_hyman_vs_true(hyman_data, config):
     plt.plot(x, y, 'o', label='Original Data')
     plt.plot(eval_points, ported_results, '-', label=f'Pchips {config}')
     plt.plot(eval_points, true_results, '--', label='True Function')
-    plt.title('Hyman Dataset Comparison vs True Function')
+    plt.title('Hyman Dataset Pchips vs True Function')
     plt.legend()
     plt.grid(True)
     plots_dir = Path(__file__).parent.joinpath("../plots").resolve()
     Path(plots_dir).mkdir(parents=True, exist_ok=True)
-    plot_file = f'Hyman_vs_true_{config["approx_order"]}_{config["mono_constraint"]}.pdf'
+    plot_file = f'Hyman_pchips_vs_true_{config["approx_order"]}_{config["mono_constraint"]}.pdf'
     plot_path = plots_dir.joinpath(plot_file)
     plt.savefig(plot_path)
     plt.close()
@@ -88,12 +88,12 @@ def test_scipy_vs_true(hyman_data):
     plt.plot(x, y, 'o', label='Original Data')
     plt.plot(eval_points, scipy_results, '-', label='SciPy (Pchip)')
     plt.plot(eval_points, true_results, '--', label='True Function')
-    plt.title('Hyman Dataset SciPy vs True Function')
+    plt.title('Hyman Dataset SciPy (Pchip) vs True Function')
     plt.legend()
     plt.grid(True)
     plots_dir = Path(__file__).parent.joinpath("../plots").resolve()
     Path(plots_dir).mkdir(parents=True, exist_ok=True)
-    plot_file = 'Hyman_scipy_vs_true.pdf'
+    plot_file = 'Hyman_scipy_pchip_vs_true.pdf'
     plot_path = plots_dir.joinpath(plot_file)
     plt.savefig(plot_path)
     plt.close()
