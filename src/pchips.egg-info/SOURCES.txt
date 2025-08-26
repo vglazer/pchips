@@ -10,5 +10,6 @@ src/pchips.egg-info/requires.txt
 src/pchips.egg-info/top_level.txt
 tests/test_akima.py
 tests/test_hyman.py
+tests/test_moler.py
 tests/test_rpn14.py
 tests/test_titanium.py
