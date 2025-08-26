@@ -1,6 +1,6 @@
 # Pchips
 
-## Background
+## Overview
 
 This is a Python port, produced with the help of [Gemini CLI](https://github.com/google-gemini/gemini-cli), of the monotonicity-preserving interpolant originally implemented [in MATLAB here](https://github.com/vglazer/USRA/tree/master/interpolation). It's meant to be used as a drop-in replacement for SciPy's [PchipInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html).
 
