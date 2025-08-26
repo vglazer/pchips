@@ -15,7 +15,8 @@ CONFIGURATIONS = [
 
 @pytest.fixture(scope="module")
 def hyman_data():
-    data = np.genfromtxt('../data/hyman_data.csv', delimiter=',', names=True)
+    data_path = Path(__file__).parent.joinpath("../data").resolve().joinpath("hyman_data.csv")
+    data = np.genfromtxt(data_path, delimiter=',', names=True)
     return data['x'], data['y']
 
 def true_function(x):
@@ -41,8 +42,11 @@ def test_hyman_vs_scipy(hyman_data, config):
     plt.title('Hyman Dataset Comparison vs SciPy')
     plt.legend()
     plt.grid(True)
-    Path('../plots').mkdir(parents=True, exist_ok=True)
-    plt.savefig(f'../plots/Hyman_vs_scipy_{config["approx_order"]}_{config["mono_constraint"]}.pdf')
+    plots_dir = Path(__file__).parent.joinpath("../plots").resolve()
+    Path(plots_dir).mkdir(parents=True, exist_ok=True)
+    plot_file = f'Hyman_vs_scipy_{config["approx_order"]}_{config["mono_constraint"]}.pdf'
+    plot_path = plots_dir.joinpath(plot_file)
+    plt.savefig(plot_path)
     plt.close()
 
 @pytest.mark.parametrize("config", CONFIGURATIONS)
@@ -63,8 +67,11 @@ def test_hyman_vs_true(hyman_data, config):
     plt.title('Hyman Dataset Comparison vs True Function')
     plt.legend()
     plt.grid(True)
-    Path('../plots').mkdir(parents=True, exist_ok=True)
-    plt.savefig(f'../plots/Hyman_vs_true_{config["approx_order"]}_{config["mono_constraint"]}.pdf')
+    plots_dir = Path(__file__).parent.joinpath("../plots").resolve()
+    Path(plots_dir).mkdir(parents=True, exist_ok=True)
+    plot_file = f'Hyman_vs_true_{config["approx_order"]}_{config["mono_constraint"]}.pdf'
+    plot_path = plots_dir.joinpath(plot_file)
+    plt.savefig(plot_path)
     plt.close()
 
 def test_scipy_vs_true(hyman_data):
@@ -84,6 +91,9 @@ def test_scipy_vs_true(hyman_data):
     plt.title('Hyman Dataset SciPy vs True Function')
     plt.legend()
     plt.grid(True)
-    Path('../plots').mkdir(parents=True, exist_ok=True)
-    plt.savefig(f'../plots/Hyman_scipy_vs_true.pdf')
+    plots_dir = Path(__file__).parent.joinpath("../plots").resolve()
+    Path(plots_dir).mkdir(parents=True, exist_ok=True)
+    plot_file = 'Hyman_scipy_vs_true.pdf'
+    plot_path = plots_dir.joinpath(plot_file)
+    plt.savefig(plot_path)
     plt.close()

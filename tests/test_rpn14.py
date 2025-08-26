@@ -15,7 +15,8 @@ CONFIGURATIONS = [
 
 @pytest.fixture(scope="module")
 def rpn14_data():
-    data = np.genfromtxt('../data/rpn14_data.csv', delimiter=',', names=True)
+    data_path = Path(__file__).parent.joinpath("../data").resolve().joinpath("rpn14_data.csv")
+    data = np.genfromtxt(data_path, delimiter=',', names=True)
     return data['x'], data['y']
 
 @pytest.mark.parametrize("config", CONFIGURATIONS)
@@ -38,6 +39,9 @@ def test_rpn14_vs_scipy(rpn14_data, config):
     plt.title('RPN14 Dataset Comparison')
     plt.legend()
     plt.grid(True)
-    Path('../plots').mkdir(parents=True, exist_ok=True)
-    plt.savefig(f'../plots/RPN14_vs_scipy_{config["approx_order"]}_{config["mono_constraint"]}.pdf')
+    plots_dir = Path(__file__).parent.joinpath("../plots").resolve()
+    Path(plots_dir).mkdir(parents=True, exist_ok=True)
+    plot_file = f'RPN14_vs_scipy_{config["approx_order"]}_{config["mono_constraint"]}.pdf'
+    plot_path = plots_dir.joinpath(plot_file)
+    plt.savefig(plot_path)
     plt.close()
