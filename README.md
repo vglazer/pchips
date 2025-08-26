@@ -6,7 +6,7 @@ This is a Python port, produced with the assistance of [Gemini CLI](https://gith
 
 It's meant to serve as a drop-in replacement for SciPy's [PchipInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html).
 
-The algorithm, due to [H. T. Huynh](https://scholar.google.com/citations?user=ZXhGCtwAAAAJ&hl=en), is described in this [NASA Tech Memo](https://ntrs.nasa.gov/citations/19910011517) (here is the [SIAM Journal on Numerical Analysis version](https://epubs.siam.org/doi/10.1137/0730004)).
+The algorithm, due to [H. T. Huynh](https://scholar.google.com/citations?user=ZXhGCtwAAAAJ&hl=en), is described in this [NASA Technical Memo](https://ntrs.nasa.gov/citations/19910011517). A nearly identical version of the paper was published in the [SIAM Journal on Numerical Analysis](https://epubs.siam.org/doi/10.1137/0730004).
 
 ## Quickstart
 
