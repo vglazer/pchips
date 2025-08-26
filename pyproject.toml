@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pchips"
+version = "1.0.0"
+authors = [
+  { name="Victor Glazer" },
+  { name="Christina C. Christara" },
+]
+description = "A Python implementation of monotonicity-preserving piecewise cubic Hermite interpolation."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Mathematics"
+]
+dependencies = [
+    "numpy",
+    "pytest",
+    "scipy",
+    "matplotlib"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,13 @@
+README.md
+pyproject.toml
+src/pchips/__init__.py
+src/pchips/interpolate.py
+src/pchips.egg-info/PKG-INFO
+src/pchips.egg-info/SOURCES.txt
+src/pchips.egg-info/dependency_links.txt
+src/pchips.egg-info/requires.txt
+src/pchips.egg-info/top_level.txt
+tests/test_akima.py
+tests/test_hyman.py
+tests/test_rpn14.py
+tests/test_titanium.py
