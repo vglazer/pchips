@@ -18,10 +18,10 @@ The algorithm is due to [H. T. Huynh](https://scholar.google.com/citations?user=
 ## Mathematical background
 
 - Say that you have a bunch of discrete samples $\{(x_i, y_i)\}_{i = 0}^{n}$ which you want to interpolate on (i.e. match exactly) using some nice function $f: \mathbb{R} \rightarrow \mathbb{R}$ such that $f(x_i) = y_i, 0 \leq i \leq n$
-- [Cubic splines](https://en.wikiversity.org/wiki/Cubic_Spline_Interpolation) are 4th order accurate (i.e. the error term is $O(h^4)$) and quite smooth:
+- [Cubic splines](https://en.wikiversity.org/wiki/Cubic_Spline_Interpolation) are 4th order accurate (i.e. the error term is $O(h^4)$ ) and quite smooth:
   - Their first derivative $f'$ is not only continuous, but also differentiable (i.e. $f \in C^2$)
   - However, cubic splines may "wiggle" by "overshooting" and "undershooting" the data. This is not visually pleasing and may be problematic for some applications
-- Another approach is to construct a [Hermite spline](https://en.wikipedia.org/wiki/Cubic_Hermite_spline), which will match not only the data but also its first derivative: 
+- Another approach is to construct a [Hermite spline](https://en.wikipedia.org/wiki/Cubic_Hermite_spline), which will match not only the data but also its first derivative:
   - That is, we also have $f'(x_i) = \dot{f}'(x_i), 0 \leq i \leq n$, where $\dot{f}'$ is the derivative of $x_i$, approximated using [Newton interpolation](https://en.wikipedia.org/wiki/Polynomial_interpolation#Newton_Interpolation), say
   - If $\dot{f}'$ is 3rd-order accurate or higher then $f$ is 4th-order accurate, as with cubic splines. You give up some smoothness, though: while $f'$ is still continuous, it is no longer differentiable (i.e. $f \in C^1$)
   - Moreover, **Hermite interpolants are not guaranteed to preserve monotonicity in the sense that they may be increasing in a section where "the data is decreasing" (suitably defined) and vice versa**
