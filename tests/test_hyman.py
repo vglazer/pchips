@@ -37,8 +37,8 @@ def test_hyman_vs_scipy(hyman_data, config):
 
     plt.figure(figsize=(10, 6))
     plt.plot(x, y, 'o', label='Original Data')
-    plt.plot(eval_points, ported_results, '-', label=f'PCHIPs {config}')
-    plt.plot(eval_points, scipy_results, '--', label='SciPy')
+    plt.plot(eval_points, ported_results, '-', label=f'Pchips {config}')
+    plt.plot(eval_points, scipy_results, '--', label='SciPy (Pchip)')
     plt.title('Hyman Dataset Comparison vs SciPy')
     plt.legend()
     plt.grid(True)
@@ -62,7 +62,7 @@ def test_hyman_vs_true(hyman_data, config):
 
     plt.figure(figsize=(10, 6))
     plt.plot(x, y, 'o', label='Original Data')
-    plt.plot(eval_points, ported_results, '-', label=f'PCHIPs {config}')
+    plt.plot(eval_points, ported_results, '-', label=f'Pchips {config}')
     plt.plot(eval_points, true_results, '--', label='True Function')
     plt.title('Hyman Dataset Comparison vs True Function')
     plt.legend()
@@ -86,7 +86,7 @@ def test_scipy_vs_true(hyman_data):
 
     plt.figure(figsize=(10, 6))
     plt.plot(x, y, 'o', label='Original Data')
-    plt.plot(eval_points, scipy_results, '-', label='SciPy')
+    plt.plot(eval_points, scipy_results, '-', label='SciPy (Pchip)')
     plt.plot(eval_points, true_results, '--', label='True Function')
     plt.title('Hyman Dataset SciPy vs True Function')
     plt.legend()

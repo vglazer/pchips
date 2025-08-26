@@ -37,8 +37,8 @@ def test_moler_vs_scipy(moler_data, config):
     # Plotting
     plt.figure(figsize=(10, 6))
     plt.plot(x, y, 'o', label='Original Data')
-    plt.plot(eval_points, ported_results, '-', label=f'PCHIPs {config}')
-    plt.plot(eval_points, scipy_results, '--', label='SciPy')
+    plt.plot(eval_points, ported_results, '-', label=f'Pchips {config}')
+    plt.plot(eval_points, scipy_results, '--', label='SciPy (Pchip)')
     plt.title('Moler Dataset Comparison')
     plt.legend()
     plt.grid(True)

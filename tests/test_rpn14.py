@@ -34,8 +34,8 @@ def test_rpn14_vs_scipy(rpn14_data, config):
 
     plt.figure(figsize=(10, 6))
     plt.plot(x, y, 'o', label='Original Data')
-    plt.plot(eval_points, ported_results, '-', label=f'PCHIPs {config}')
-    plt.plot(eval_points, scipy_results, '--', label='SciPy')
+    plt.plot(eval_points, ported_results, '-', label=f'Pchips {config}')
+    plt.plot(eval_points, scipy_results, '--', label='SciPy (Pchip)')
     plt.title('RPN14 Dataset Comparison')
     plt.legend()
     plt.grid(True)
