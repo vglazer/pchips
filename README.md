@@ -1,6 +1,4 @@
-# PCHIPS
-
-This package provides a Python implementation of the Piecewise Cubic Hermite Interpolating Polynomial (PCHIP) algorithm.
+# PCHIPs
 
 This code is a direct port of the MATLAB implementation based on the paper **"Accurate Monotone Cubic Interpolation"** by Hung T. Huynh (NASA Technical Memorandum 103789).
 
