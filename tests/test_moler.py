@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
 import matplotlib.pyplot as plt
-from pchips import PchipInterpolator
-from scipy.interpolate import PchipInterpolator as ScipyPchipInterpolator
+#from pchips import PchipInterpolator
+import pchips
+import scipy.interpolate as interpolate
 from pathlib import Path
 
 CONFIGURATIONS = [
@@ -24,11 +25,11 @@ def test_moler_vs_scipy(moler_data, config):
     eval_points = np.linspace(x.min(), x.max(), 1001)
 
     # Pchips implementation
-    interp = PchipInterpolator(x, y, **config)
+    interp = pchips.PchipInterpolator(x, y, **config)
     ported_results = interp(eval_points)
 
     # SciPy (Pchip) implementation
-    scipy_interp = ScipyPchipInterpolator(x, y)
+    scipy_interp = interpolate.PchipInterpolator(x, y)
     scipy_results = scipy_interp(eval_points)
 
     # Comparison
