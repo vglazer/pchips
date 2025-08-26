@@ -1,4 +1,4 @@
-# PCHIPS
+# PCHIPs
 
 This package provides a Python implementation of the Piecewise Cubic Hermite Interpolating Polynomial (PCHIP) algorithm.
 
