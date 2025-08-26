@@ -1,8 +1,8 @@
 # Pchips
 
 ![Moler data comparison](assets/Moler_data_pchip_vs_pchips.png)
-![Hyman data: Pchips vs True](assets/Hyman_pchips_vs_true.png)
 ![Hyman data: Pchip vs True](assets/Hyman_scipy_pchip_vs_true.png)
+![Hyman data: Pchips vs True](assets/Hyman_pchips_vs_true.png)
 
 ## Overview
 
