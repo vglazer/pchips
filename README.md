@@ -6,7 +6,9 @@
 
 ## Overview
 
-This is a Python port, produced with the assistance of [Gemini CLI](https://github.com/google-gemini/gemini-cli) in an afternoon, of the monotonicity-preserving interpolant [originally implemented in MATLAB here](https://github.com/vglazer/USRA/tree/master/interpolation). It's meant to serve as a drop-in replacement for SciPy's [PchipInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html). All the logic is in [interpolate.py](src/pchips/interpolate.py).
+This is a Python port, produced with the assistance of [Gemini CLI](https://github.com/google-gemini/gemini-cli) in an afternoon, of the monotonicity-preserving interpolant [originally implemented in MATLAB here](https://github.com/vglazer/USRA/tree/master/interpolation). It's meant to serve as a drop-in replacement for SciPy's [PchipInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html). 
+
+All the logic is in [interpolate.py](src/pchips/interpolate.py). The main point of the [tests](tests) is to generate plots.
 
 The algorithm, due to [H. T. Huynh](https://scholar.google.com/citations?user=ZXhGCtwAAAAJ&hl=en), is described in this [NASA Technical Memo](https://ntrs.nasa.gov/citations/19910011517), which is self-contained and quite readable. A nearly identical version was later published in the [SIAM Journal on Numerical Analysis](https://epubs.siam.org/doi/10.1137/0730004).
 
