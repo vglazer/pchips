@@ -2,10 +2,10 @@ import numpy as np
 
 class PchipInterpolator:
     """
-    PchipInterpolator: Piecewise Cubic Hermite Interpolating Polynomial.
+    PchipInterpolator: H.T. Huynh's accurate monotone cubic interpolant.
 
     This class mimics the behavior of `scipy.interpolate.PchipInterpolator`
-    but uses the specific algorithms from the MATLAB repository.
+    but uses H.T. Huyn's algorithm instead of F. N. Fritsch and J. Butland's.
     """
 
     def __init__(self, x, y, approx_order='cubic', mono_constraint='M3'):
