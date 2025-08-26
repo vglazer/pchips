@@ -1,5 +1,9 @@
 # Pchips
 
+![Moler data comparison](assets/Moler_data_pchip_vs_pchips.png)
+![Hyman data: Pchips vs True](assets/Hyman_pchips_vs_true.png)
+![Hyman data: Pchip vs True](assets/Hyman_scipy_pchip_vs_true.png)
+
 ## Overview
 
 This is a Python port, produced with the assistance of [Gemini CLI](https://github.com/google-gemini/gemini-cli), of the monotonicity-preserving interpolant originally implemented [in MATLAB here](https://github.com/vglazer/USRA/tree/master/interpolation). It's meant to serve as a drop-in replacement for SciPy's [PchipInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html).
