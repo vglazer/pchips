@@ -1,11 +1,5 @@
-# PCHIPs
+# Pchips
 
-This code is a direct port of the MATLAB implementation based on the paper **"Accurate Monotone Cubic Interpolation"** by Hung T. Huynh (NASA Technical Memorandum 103789).
+This is a Python port, produced with the help of [Gemini CLI](https://github.com/google-gemini/gemini-cli), of the monotonicity-preserving interpolant originally implemented [in MATLAB here](https://github.com/vglazer/USRA/tree/master/interpolation). It's meant to be used as a drop-in replacement for SciPy's [PchipInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html).
 
-The original MATLAB code was written by **Victor Glazer** under the supervision of **Christina C. Christara** as part of an NSERC USRA project at the University of Toronto.
-
-## Features
-
-- Monotonicity-preserving piecewise cubic Hermite interpolation.
-- Selectable derivative approximation methods ('cubic' or 'quartic').
-- Selectable monotonicity constraints ('M3' or 'M4').
+The algorithm is due to [H. T. Huynh](https://scholar.google.com/citations?user=ZXhGCtwAAAAJ&hl=en) and is described in this [NASA Tech Memo](https://ntrs.nasa.gov/citations/19910011517) (here is the [SIAM Journal on Numerical Analysis version](https://0-www-jstor-org.library.nysoclib.org/stable/2158096)).
