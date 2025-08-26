@@ -23,11 +23,11 @@ def test_moler_vs_scipy(moler_data, config):
     x, y = moler_data
     eval_points = np.linspace(x.min(), x.max(), 1001)
 
-    # PCHIPs implementation
+    # Pchips implementation
     interp = PchipInterpolator(x, y, **config)
     ported_results = interp(eval_points)
 
-    # SciPy implementation
+    # SciPy (Pchip) implementation
     scipy_interp = ScipyPchipInterpolator(x, y)
     scipy_results = scipy_interp(eval_points)
 

@@ -24,14 +24,18 @@ def test_rpn14_vs_scipy(rpn14_data, config):
     x, y = rpn14_data
     eval_points = np.linspace(x.min(), x.max(), 1001)
 
+    # Pchips implementation
     interp = PchipInterpolator(x, y, **config)
     ported_results = interp(eval_points)
 
+    # SciPy (Pchip) implementation
     scipy_interp = ScipyPchipInterpolator(x, y)
     scipy_results = scipy_interp(eval_points)
 
+    # Comparison
     np.testing.assert_allclose(ported_results, scipy_results, rtol=1e-1, atol=0.1)
 
+    # Plotting
     plt.figure(figsize=(10, 6))
     plt.plot(x, y, 'o', label='Original Data')
     plt.plot(eval_points, ported_results, '-', label=f'Pchips {config}')
