@@ -8,4 +8,4 @@ uv.lock
 __pycache__/
 *.pyc
 .venv
-src/pchips.egg-info/PKG-INFO
+PKG-INFO
