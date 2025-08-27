@@ -30,7 +30,7 @@ The algorithm, due to [H. T. Huynh](https://scholar.google.com/citations?user=ZX
 - An alternative approach is to construct a [Hermite spline](https://en.wikipedia.org/wiki/Cubic_Hermite_spline), which will match not only the data but also its first derivative:
   - That is, we also have $f'(x_i) = \hat{f'}(x_i), 0 \leq i \leq n$, where $\hat{f'}$ is the approximate derivative of the function sampled to generate the data, produced using e.g. [Newton interpolation](https://en.wikipedia.org/wiki/Polynomial_interpolation#Newton_Interpolation)
   - If $\hat{f'}$ is 3rd-order accurate or higher then $f$ is 4th-order accurate, as with cubic splines. You give up some smoothness, though: while $f'$ is still continuous, it is no longer differentiable (i.e. $f \in C^1$)
-  - Moreover, **Hermite interpolants are not guaranteed to preserve monotonicity, in the sense that they may be increasing in regions where the data is decreasing, and vice versa**
+  - Moreover, **Hermite interpolants are not guaranteed to preserve monotonicity. Meaning, they may be increasing in regions where the data is decreasing and vice versa**
 - A number approaches have been proposed for dealing with this, but they generally trade away accuracy in order to preserve monotonicity. For example, [PchipInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html) uses the method from [Fritsch and Butland](https://epubs.siam.org/doi/10.1137/0905021), which is only 2nd order accurate in general (i.e. no better than linear interpolation):
   - **Intuitively, the issue is that the interpolant _imposes_ monotonicty on the data rather than simply _preserving_ it**
   - This results in "slicing" near local maxima and minima, causing accuracy to degrade
