@@ -38,4 +38,4 @@ The algorithm, due to [H. T. Huynh](https://scholar.google.com/citations?user=ZX
   - The modified Akima or ["Makima" interpolant](https://blogs.mathworks.com/cleve/2019/04/29/makima-piecewise-cubic-interpolation/), implemented by SciPy's [Akima1DInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.Akima1DInterpolator.html#scipy.interpolate.Akima1DInterpolator), produces a spline which "appears natural" and avoids slicing for non-monotone data. However, as far as I can tell, it does not guarantee 4th order accuracy. Here is Akima's [original paper](https://dl.acm.org/doi/pdf/10.1145/321607.321609).
 - [H.T. Huynh's interpolant](https://ntrs.nasa.gov/api/citations/19910011517/downloads/19910011517.pdf), which is implemented in [interpolate.py](src/pchips/interpolate.py), effectively relaxes the monotonicty constraint near strict local extrema:
   - Depending on the approximation used for $\hat{f'}$, this results in a uniformly $O(h^3)$ or $O(h^4)$ accurate interpolant which preserves monotonicity without imposing it
-  - It's quite nice to look at, as well
+  - It's also quite natural-looking, to boot
