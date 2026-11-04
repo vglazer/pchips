@@ -1,10 +1,12 @@
 # Pchips
 
-![Moler data comparison](assets/Moler_data_pchip_vs_pchips.png)
+![sin(x) from 11 samples: SciPy cuts the peak off flat, Pchips follows it](assets/gallery/preserving_vs_imposing.png)
 
 ## Overview
 
 This is a Python port, produced using [Gemini CLI](https://github.com/google-gemini/gemini-cli) in an afternoon, of the accurate monotone cubic interpolant [originally implemented in MATLAB here](https://github.com/vglazer/USRA/tree/master/interpolation). It was then refined using [Claude Code](https://claude.com/claude-code): checked against Huynh's paper (which turned up and fixed two bugs in the M4 constraint inherited from the MATLAB original), turned into a drop-in replacement for SciPy's [PchipInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html), vectorized, and given a more thorough test suite.
+
+The [gallery](GALLERY.md) shows in pictures where it differs from SciPy, and how its options differ from each other.
 
 All the logic is in [interpolate.py](src/pchips/interpolate.py). The [tests](tests) compare it to SciPy, check the guarantees from Huynh's paper and generate comparison plots. [test_scipy_suite.py](tests/test_scipy_suite.py) runs SciPy's own `PchipInterpolator` tests against it.
 
