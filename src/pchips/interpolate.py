@@ -64,7 +64,8 @@ class PchipInterpolator(scipy.interpolate.CubicHermiteSpline):
         if np.any(np.diff(x) <= 0):
             raise ValueError("`x` must be strictly increasing sequence.")
 
-        self.x = x
+        # Not self.x, which recent SciPy versions only allow to be set by CubicHermiteSpline.__init__
+        self._knots = x
         self.n = len(x)
         y = np.moveaxis(y, axis, 0)
 
@@ -84,7 +85,7 @@ class PchipInterpolator(scipy.interpolate.CubicHermiteSpline):
     # Indexing with an array of k evaluates a formula at all of those k at once.
 
     def _vecdiffs(self, y):
-        x = self.x
+        x = self._knots
         s = np.diff(y, axis=0) / (x[1:] - x[:-1])[:, None]
         ds = np.diff(s, axis=0) / (x[2:] - x[:-2])[:, None]
         e = np.diff(ds, axis=0) / (x[3:] - x[:-3])[:, None]
@@ -94,7 +95,7 @@ class PchipInterpolator(scipy.interpolate.CubicHermiteSpline):
     def _approxder(self, y):
         d = np.zeros_like(y)
         s, ds, e, f = self._vecdiffs(y)
-        x = self.x[:, None]
+        x = self._knots[:, None]
         n = self.n
 
         if self.approx_order == 'cubic':
@@ -134,7 +135,7 @@ class PchipInterpolator(scipy.interpolate.CubicHermiteSpline):
 
     def _ttilde(self, k, s, ds, emin, h):
         # Slopes at x[k] of the cubics on [x[k-1], x[k]] and [x[k], x[k+1]] (Huynh, 4.8a,b and 4.11)
-        x = self.x[:, None]
+        x = self._knots[:, None]
         q1 = s[k-1] + h[k-1]*self._minmod(ds[k-2] + emin[k-3]*(x[k]   - x[k-2]),
                                     ds[k-1] + emin[k-2]*(x[k]   - x[k+1]))
         q2 = s[k]   - h[k]  *self._minmod(ds[k-1] + emin[k-2]*(x[k]   - x[k-1]),
@@ -144,7 +145,7 @@ class PchipInterpolator(scipy.interpolate.CubicHermiteSpline):
     def _tmax(self, k, s, dmin, smin):
         # Bound which relaxes the monotonicity constraint near extrema (Huynh, 3.13 and 3.14)
         nder = 3
-        x = self.x[:, None]
+        x = self._knots[:, None]
         p1 = s[k-1] + dmin[k-2]*(x[k] - x[k-1])
         p2 = s[k]   + dmin[k-1]*(x[k] - x[k+1])
         t = self._minmod(p1, p2)
@@ -155,7 +156,7 @@ class PchipInterpolator(scipy.interpolate.CubicHermiteSpline):
         n = self.n
         dper = d.copy()
         s, ds, e, f = self._vecdiffs(y)
-        h = np.diff(self.x)[:, None]
+        h = np.diff(self._knots)[:, None]
         smin = self._minmod(s[:-1], s[1:])
         dmin = self._minmod(ds[:-1], ds[1:])
 

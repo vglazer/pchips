@@ -4,20 +4,21 @@
 
 ## Overview
 
-This is a Python port, produced using [Gemini CLI](https://github.com/google-gemini/gemini-cli) in an afternoon, of the accurate monotone cubic interpolant [originally implemented in MATLAB here](https://github.com/vglazer/USRA/tree/master/interpolation). It's meant to serve as a drop-in replacement for SciPy's [PchipInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html).
+This is a Python port, produced using [Gemini CLI](https://github.com/google-gemini/gemini-cli) in an afternoon, of the accurate monotone cubic interpolant [originally implemented in MATLAB here](https://github.com/vglazer/USRA/tree/master/interpolation). It was then refined using [Claude Code](https://claude.com/claude-code): checked against Huynh's paper (which turned up and fixed two bugs in the M4 constraint inherited from the MATLAB original), turned into a drop-in replacement for SciPy's [PchipInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html), vectorized, and given a more thorough test suite.
 
 All the logic is in [interpolate.py](src/pchips/interpolate.py). The [tests](tests) compare it to SciPy, check the guarantees from Huynh's paper and generate comparison plots. [test_scipy_suite.py](tests/test_scipy_suite.py) runs SciPy's own `PchipInterpolator` tests against it.
 
 The algorithm, due to [H. T. Huynh](https://scholar.google.com/citations?user=ZXhGCtwAAAAJ&hl=en), is described in this [NASA Technical Memo](https://ntrs.nasa.gov/citations/19910011517), which is self-contained and quite readable. A nearly identical version was later published in the [SIAM Journal on Numerical Analysis](https://epubs.siam.org/doi/10.1137/0730004).
 
-## Quickstart
+## Installation
 
-- Make sure you have [uv installed](https://docs.astral.sh/uv/getting-started/installation/)
-- Clone the repo
-- `cd pchips`
-- `uv sync`
-- `uv run pytest`
-- Check out the comparison plots in the `plots` subdirectory
+Pchips requires Python 3.10 or later, NumPy 1.23.5 or later and SciPy 1.10 or later. It is not on PyPI, so install it from GitHub:
+
+```sh
+pip install git+https://github.com/vglazer/pchips
+# or
+uv add git+https://github.com/vglazer/pchips
+```
 
 ## Usage
 
@@ -34,10 +35,22 @@ interp.derivative(), interp.antiderivative(), interp.integrate(a, b), interp.roo
 
 Like SciPy's version, `PchipInterpolator` is a [CubicHermiteSpline](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicHermiteSpline.html), so it has the same signature, methods, input validation, output shapes and extrapolation behavior. Two keyword-only options select the variant of Huynh's method:
 
-- `approx_order`: `'cubic'` (default) or `'quartic'`, the derivative approximation. `'quartic'` is more accurate on smooth data
-- `mono_constraint`: `'M3'` (default) or `'M4'`, the monotonicity constraint. See below for when to use which
+- `approx_order`: `'cubic'` (default) or `'quartic'`, the derivative approximation
+- `mono_constraint`: `'M3'` (default) or `'M4'`, the monotonicity constraint
 
-With fewer than five data points, the result is identical to SciPy's.
+See below for when to use which. With fewer than five data points, the result is identical to SciPy's.
+
+As with SciPy, extrapolation is on by default and simply extends the first and last cubics, so the interpolant drifts away from the data quickly outside its range. Pass `extrapolate=False` to get `nan` there instead.
+
+### Choosing between cubic and quartic
+
+**Use `'quartic'` if your data are smooth and sampled finely enough to resolve their features, and `'cubic'`, the default, otherwise.**
+
+Why:
+
+- **Quartic is more accurate on well-resolved smooth data**. Both give an $O(h^4)$ interpolant, but the quartic derivative approximation has a smaller error constant. With 321 samples, the maximum error is 3.9e-10 instead of 5.8e-9 for $\sin(x)$, and 4.2e-9 instead of 5.8e-8 for $e^{-x^2}$
+- **Cubic can be more accurate on coarse data**. The quartic approximation uses five neighbouring samples instead of four, so it relies on the data being smooth over a wider stencil. With only 11 samples of $e^{-x^2}$ on $[-3, 3]$, the maximum error is 5.2e-2 with quartic and 3.6e-2 with cubic, and the same happens with a steep $\tanh(5x)$ and Runge's function
+- **Quartic is about 1.3 times slower to construct**
 
 ### Choosing between M3 and M4
 
@@ -58,7 +71,7 @@ In short: switch if your data come from a smooth underlying function and accurac
 
 ### Reasons to switch
 
-- **Much higher accuracy near local extrema**. SciPy's interpolant flattens out at every local maximum and minimum, which makes it only $O(h^2)$ accurate there. Pchips is uniformly $O(h^4)$. Here is the maximum error with 321 equally spaced samples (see `test_convergence_vs_scipy` in [test_vs_scipy.py](tests/test_vs_scipy.py)):
+- **Much higher accuracy near local extrema**. SciPy's interpolant flattens out at every local maximum and minimum, which makes it only $O(h^2)$ accurate there. Pchips is $O(h^4)$ there too, and everywhere else, except at flat inflection points with the default M3 constraint (see above). Here is the maximum error with 321 equally spaced samples (see `test_convergence_vs_scipy` in [test_vs_scipy.py](tests/test_vs_scipy.py)):
 
   | Function | SciPy | Pchips (default) | Pchips (`approx_order='quartic'`) |
   | --- | --- | --- | --- |
@@ -99,10 +112,40 @@ Evaluating the interpolant, along with its derivatives and integrals, is exactly
   - If $\hat{f'}$ is 3rd-order accurate or higher then $f$ is 4th-order accurate, as with cubic splines. You give up some smoothness, though: while $f'$ is still continuous, it is no longer differentiable (i.e. $f \in C^1$)
   - Moreover, **Hermite interpolants are still not guaranteed to preserve monotonicity**. Meaning, they may be increasing in regions where the data is decreasing and vice versa
 - A number of approaches have been proposed for dealing with this, but they generally trade away accuracy in order to preserve monotonicity. For example, [PchipInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html) uses the method from [Fritsch and Butland](https://epubs.siam.org/doi/10.1137/0905021), which is only 2nd order accurate in general (i.e. no better than linear interpolation):
-  - **Intuitively, the issue is that the interpolant _imposes_ monotonicty on the data rather than simply _preserving_ it**
+  - **Intuitively, the issue is that the interpolant _imposes_ monotonicity on the data rather than simply _preserving_ it**
   - This results in "slicing" near local maxima and minima, causing accuracy to degrade
   - The "Monotone Convex" spline introduced by [Hagan and West](https://www.deriscope.com/docs/Hagan_West_curves_AMF.pdf) in the context of forward curve construction also suffers from this problem
   - The modified Akima or ["Makima" interpolant](https://blogs.mathworks.com/cleve/2019/04/29/makima-piecewise-cubic-interpolation/), which is one of the variants supported by SciPy's [Akima1DInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.Akima1DInterpolator.html#scipy.interpolate.Akima1DInterpolator), produces a spline which "appears natural" and avoids slicing for non-monotone data. However, as far as I can tell, it does not guarantee 4th order accuracy. Here is Akima's [original paper](https://dl.acm.org/doi/pdf/10.1145/321607.321609).
-- [H.T. Huynh's interpolant](https://ntrs.nasa.gov/api/citations/19910011517/downloads/19910011517.pdf), which is implemented in [interpolate.py](src/pchips/interpolate.py), effectively relaxes the monotonicty constraint near strict local extrema:
-  - Depending on the approximation used for $\hat{f'}$, this results in a uniformly $O(h^3)$ or $O(h^4)$ accurate interpolant which _preserves_ monotonicity without _imposing_ it
+- [H.T. Huynh's interpolant](https://ntrs.nasa.gov/api/citations/19910011517/downloads/19910011517.pdf), which is implemented in [interpolate.py](src/pchips/interpolate.py), effectively relaxes the monotonicity constraint near strict local extrema:
+  - This results in an interpolant which _preserves_ monotonicity without _imposing_ it. With a 3rd-order or better approximation for $\hat{f'}$, it is $O(h^4)$ accurate, including near local extrema. With the M3 constraint it may drop to $O(h^3)$ at flat inflection points, while the M4 constraint is uniformly $O(h^4)$
   - It's also quite natural-looking, to boot
+
+## Development
+
+- Make sure you have [uv installed](https://docs.astral.sh/uv/getting-started/installation/)
+- Clone the repo
+- `cd pchips`
+- `uv sync`
+- `uv run pytest`
+- Check out the comparison plots in the `plots` subdirectory
+
+## Citation
+
+If you use Pchips in published work, please cite Huynh's paper:
+
+```bibtex
+@article{huynh1993accurate,
+  author  = {Huynh, Hung T.},
+  title   = {Accurate Monotone Cubic Interpolation},
+  journal = {SIAM Journal on Numerical Analysis},
+  volume  = {30},
+  number  = {1},
+  pages   = {57--100},
+  year    = {1993},
+  doi     = {10.1137/0730004}
+}
+```
+
+## License
+
+Pchips is released under the [MIT License](LICENSE). [test_scipy_suite.py](tests/test_scipy_suite.py) is adapted from SciPy's tests and keeps SciPy's BSD 3-Clause License, which is reproduced at the top of that file.
