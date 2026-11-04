@@ -9,3 +9,6 @@ __pycache__/
 *.pyc
 .venv
 PKG-INFO
+*.egg-info/
+build/
+dist/

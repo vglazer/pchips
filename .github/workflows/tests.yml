@@ -1,0 +1,35 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  # Weekly, to catch breakage from new NumPy and SciPy releases
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Oldest supported versions
+            python: "3.10"
+            pins: "numpy==1.23.5 scipy==1.10.0 matplotlib==3.7.5"
+          - name: Latest versions
+            python: "3.14"
+            pins: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install
+        run: |
+          uv venv --python ${{ matrix.python }}
+          uv pip install . pytest matplotlib ${{ matrix.pins }}
+      - name: Show versions
+        run: .venv/bin/python -c "import sys, numpy, scipy; print(sys.version, numpy.__version__, scipy.__version__)"
+      - name: Test
+        run: .venv/bin/python -m pytest -q

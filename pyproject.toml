@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -10,10 +10,17 @@ authors = [
 ]
 description = "A drop-in replacement for scipy.interpolate.PchipInterpolator using H. T. Huynh's accurate monotone cubic interpolant."
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
+keywords = ["interpolation", "pchip", "monotone", "cubic", "hermite", "spline", "scipy"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Mathematics"
@@ -22,6 +29,11 @@ dependencies = [
     "numpy>=1.23.5",
     "scipy>=1.10",
 ]
+
+[project.urls]
+Homepage = "https://github.com/vglazer/pchips"
+Source = "https://github.com/vglazer/pchips"
+Issues = "https://github.com/vglazer/pchips/issues"
 
 [dependency-groups]
 dev = [
