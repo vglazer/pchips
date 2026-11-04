@@ -1,0 +1,52 @@
+name: Publish to PyPI
+
+# Runs when a release is published on GitHub. The release's tag must be "v" followed
+# by the version in pyproject.toml, e.g. v1.0.2.
+on:
+  release:
+    types: [published]
+
+jobs:
+  test:
+    uses: ./.github/workflows/tests.yml
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Check that the version matches the release tag
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          if [ "v$version" != "$TAG" ]; then
+            echo "::error::pyproject.toml has version $version, but the release tag is $TAG"
+            exit 1
+          fi
+      - name: Build
+        run: uv build
+      - name: Check
+        run: uvx twine check dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    # Must match the environment name in PyPI's trusted publisher settings
+    environment:
+      name: pypi
+      url: https://pypi.org/project/pchips/
+    permissions:
+      # Lets PyPI verify that the upload comes from this workflow, so no token is needed
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

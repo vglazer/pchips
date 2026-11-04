@@ -215,6 +215,12 @@ Evaluating the interpolant, along with its derivatives and integrals, is exactly
 - `uv run pytest`
 - Check out the comparison plots in the `plots` subdirectory
 
+To release a new version:
+
+- Bump `version` in [pyproject.toml](pyproject.toml), then commit and push
+- [Create a release](https://github.com/vglazer/pchips/releases/new) on GitHub with a new tag `v` followed by that version, e.g. `v1.0.2`
+- The [publish workflow](.github/workflows/publish.yml) then runs the tests, builds the package and publishes it to PyPI
+
 ## Citation
 
 If you use Pchips in published work, please cite Huynh's paper:
