@@ -110,7 +110,7 @@ def test_m4_ttilde_exact_for_cubics():
     emin = minmod(e[:-1], e[1:])
     h = np.diff(x)[:, None]
     k = np.arange(3, len(x) - 3)
-    np.testing.assert_allclose(interp._ttilde(k, s, ds, emin, h)[:, 0], 3*x[k]**2 - 8*x[k] + 1, rtol=1e-10)
+    np.testing.assert_allclose(interp._ttilde(3, len(x) - 3, s, ds, emin, h)[:, 0], 3*x[k]**2 - 8*x[k] + 1, rtol=1e-10)
 
 @pytest.mark.parametrize("config", CONFIGURATIONS)
 def test_reproduces_linear(config):

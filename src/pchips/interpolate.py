@@ -75,14 +75,24 @@ class PchipInterpolator(scipy.interpolate.CubicHermiteSpline):
         else:
             # Compute the derivatives for all columns at once
             columns = y.reshape(self.n, int(np.prod(y.shape[1:])))
-            d = self._approxder(columns)
-            dydx = self._perturbder(d, columns).reshape(y.shape)
+            diffs = self._vecdiffs(columns)
+            d = self._approxder(diffs)
+            dydx = self._perturbder(d, diffs).reshape(y.shape)
 
         super().__init__(x, y, dydx, axis=0, extrapolate=extrapolate)
         self.axis = axis
 
-    # The helpers below work on data with shape (n, number of columns).
-    # Indexing with an array of k evaluates a formula at all of those k at once.
+    # The helpers below work on data with shape (n, number of columns). Each formula is
+    # evaluated for a range of nodes k at once: with at = _offsets(start, stop),
+    # s[at(-1)] is s[k-1] for all k in range(start, stop), without copying.
+
+    @staticmethod
+    def _offsets(start, stop):
+        return lambda offset: slice(start + offset, stop + offset)
+
+    @staticmethod
+    def _minmod(a, b):
+        return np.where(np.signbit(a) == np.signbit(b), np.copysign(np.minimum(np.abs(a), np.abs(b)), a), 0.0)
 
     def _vecdiffs(self, y):
         x = self._knots
@@ -92,70 +102,59 @@ class PchipInterpolator(scipy.interpolate.CubicHermiteSpline):
         f = np.diff(e, axis=0) / (x[4:] - x[:-4])[:, None]
         return s, ds, e, f
 
-    def _approxder(self, y):
-        d = np.zeros_like(y)
-        s, ds, e, f = self._vecdiffs(y)
+    def _approxder(self, diffs):
+        # Derivatives of the Newton interpolating polynomials through each node and the
+        # nodes to its right, or, for the last few nodes, through the last nodes
+        s, ds, e, f = diffs
         x = self._knots[:, None]
         n = self.n
+        d = np.empty((n, s.shape[1]))
 
         if self.approx_order == 'cubic':
-            k = np.arange(n - 3)
-            d[k] = s[k] + ds[k]*(x[k] - x[k+1]) + \
-                   e[k]*(x[k]**2 + x[k+1]*x[k+2] - x[k]*x[k+1] - x[k]*x[k+2])
-            w1 = 3*e[n-4]
-            w2 = 2*(ds[n-4] - e[n-4]*(x[n-4] + x[n-3] + x[n-2]))
-            rest = s[n-4] - ds[n-4]*(x[n-4] + x[n-3]) + \
-                   e[n-4]*(x[n-4]*x[n-3] + x[n-4]*x[n-2] + x[n-3]*x[n-2])
-            k = np.arange(n - 3, n)
-            d[k] = w1*x[k]**2 + w2*x[k] + rest
+            at = self._offsets(0, n - 3)
+            a = x[at(0)] - x[at(1)]
+            b = x[at(0)] - x[at(2)]
+            d[at(0)] = s[at(0)] + ds[at(0)]*a + e[at(0)]*a*b
+            u = [x[n-3:] - x[n-4+i] for i in range(3)]
+            d[n-3:] = s[n-4] + ds[n-4]*(u[0] + u[1]) + e[n-4]*(u[0]*u[1] + u[0]*u[2] + u[1]*u[2])
         elif self.approx_order == 'quartic':
-            k = np.arange(n - 4)
-            d[k] = s[k] + ds[k]*(x[k] - x[k+1]) + \
-                   e[k]*(x[k]*(x[k] - x[k+1] - x[k+2]) + x[k+1]*x[k+2]) + \
-                   f[k]*(x[k]**2*(x[k] - x[k+1] - x[k+2] - x[k+3]) + \
-                         x[k]*(x[k+1]*x[k+2] + x[k+1]*x[k+3] + x[k+2]*x[k+3]) - \
-                         x[k+1]*x[k+2]*x[k+3])
-            w1 = 4*f[n-5]
-            w2 = 3*(e[n-5] - f[n-5]*(x[n-5] + x[n-4] + x[n-3] + x[n-2]))
-            w3 = 2*(ds[n-5] - e[n-5]*(x[n-5] + x[n-4] + x[n-3]) + \
-                    f[n-5]*(x[n-5]*(x[n-4] + x[n-3] + x[n-2]) + \
-                    x[n-4]*x[n-3] + x[n-4]*x[n-2] + x[n-3]*x[n-2]))
-            rest = s[n-5] - ds[n-5]*(x[n-5] + x[n-4]) + \
-                   e[n-5]*(x[n-5]*x[n-4] + x[n-5]*x[n-3] + x[n-4]*x[n-3]) - \
-                   f[n-5]*(x[n-4]*x[n-3]*x[n-2] + \
-                           x[n-5]*(x[n-4]*x[n-3] + x[n-4]*x[n-2] + x[n-3]*x[n-2]))
-            k = np.arange(n - 4, n)
-            d[k] = w1*x[k]**3 + w2*x[k]**2 + w3*x[k] + rest
+            at = self._offsets(0, n - 4)
+            a = x[at(0)] - x[at(1)]
+            b = x[at(0)] - x[at(2)]
+            c = x[at(0)] - x[at(3)]
+            d[at(0)] = s[at(0)] + ds[at(0)]*a + e[at(0)]*a*b + f[at(0)]*a*b*c
+            u = [x[n-4:] - x[n-5+i] for i in range(4)]
+            d[n-4:] = s[n-5] + ds[n-5]*(u[0] + u[1]) + e[n-5]*(u[0]*u[1] + u[0]*u[2] + u[1]*u[2]) + \
+                      f[n-5]*(u[0]*u[1]*u[2] + u[0]*u[1]*u[3] + u[0]*u[2]*u[3] + u[1]*u[2]*u[3])
         else:
             raise ValueError(f"Unsupported approx_order: {self.approx_order}")
         return d
 
-    def _minmod(self, a, b):
-        return (np.sign(a) + np.sign(b)) / 2 * np.minimum(np.abs(a), np.abs(b))
-
-    def _ttilde(self, k, s, ds, emin, h):
+    def _ttilde(self, start, stop, s, ds, emin, h):
         # Slopes at x[k] of the cubics on [x[k-1], x[k]] and [x[k], x[k+1]] (Huynh, 4.8a,b and 4.11)
         x = self._knots[:, None]
-        q1 = s[k-1] + h[k-1]*self._minmod(ds[k-2] + emin[k-3]*(x[k]   - x[k-2]),
-                                    ds[k-1] + emin[k-2]*(x[k]   - x[k+1]))
-        q2 = s[k]   - h[k]  *self._minmod(ds[k-1] + emin[k-2]*(x[k]   - x[k-1]),
-                                    ds[k]   + emin[k-1]*(x[k]   - x[k+2]))
+        at = self._offsets(start, stop)
+        q1 = s[at(-1)] + h[at(-1)]*self._minmod(ds[at(-2)] + emin[at(-3)]*(x[at(0)] - x[at(-2)]),
+                                          ds[at(-1)] + emin[at(-2)]*(x[at(0)] - x[at(1)]))
+        q2 = s[at(0)]  - h[at(0)] *self._minmod(ds[at(-1)] + emin[at(-2)]*(x[at(0)] - x[at(-1)]),
+                                          ds[at(0)]  + emin[at(-1)]*(x[at(0)] - x[at(2)]))
         return self._minmod(q1, q2)
 
-    def _tmax(self, k, s, dmin, smin):
+    def _tmax(self, start, stop, s, dmin, smin):
         # Bound which relaxes the monotonicity constraint near extrema (Huynh, 3.13 and 3.14)
         nder = 3
         x = self._knots[:, None]
-        p1 = s[k-1] + dmin[k-2]*(x[k] - x[k-1])
-        p2 = s[k]   + dmin[k-1]*(x[k] - x[k+1])
+        at = self._offsets(start, stop)
+        p1 = s[at(-1)] + dmin[at(-2)]*(x[at(0)] - x[at(-1)])
+        p2 = s[at(0)]  + dmin[at(-1)]*(x[at(0)] - x[at(1)])
         t = self._minmod(p1, p2)
-        return t, np.sign(t) * np.maximum(nder * np.abs(smin[k-1]), (nder / 2) * np.abs(t))
+        return t, np.sign(t) * np.maximum(nder * np.abs(smin[at(-1)]), (nder / 2) * np.abs(t))
 
-    def _perturbder(self, d, y):
+    def _perturbder(self, d, diffs):
         nder = 3
         n = self.n
         dper = d.copy()
-        s, ds, e, f = self._vecdiffs(y)
+        s, ds, e, f = diffs
         h = np.diff(self._knots)[:, None]
         smin = self._minmod(s[:-1], s[1:])
         dmin = self._minmod(ds[:-1], ds[1:])
@@ -169,23 +168,22 @@ class PchipInterpolator(scipy.interpolate.CubicHermiteSpline):
         dper[1] = self._minmod(d[1], nder * self._minmod(s[0], s[1]))
         dper[n-2] = self._minmod(d[n-2], nder*self._minmod(s[n-3], s[n-2]))
 
+        # M3 constraint at nodes 2, ..., n-3 (for M4, only at the first and last of them)
+        t, tmax = self._tmax(2, n - 2, s, dmin, smin)
         if self.mono_constraint == 'M3':
-            k = np.arange(2, n - 2)
-            _, tmax = self._tmax(k, s, dmin, smin)
-            dper[k] = self._minmod(d[k], tmax)
+            dper[2:n-2] = self._minmod(d[2:n-2], tmax)
         else:
-            # M3 constraint next to the MP points, M4 constraint in the interior
-            k = np.array([2, n - 3])
-            _, tmax = self._tmax(k, s, dmin, smin)
-            dper[k] = self._minmod(d[k], tmax)
-            emin = self._minmod(e[:-1], e[1:])
-            k = np.arange(3, n - 3)
-            t, _ = self._tmax(k, s, dmin, smin)
-            tt = self._ttilde(k, s, ds, emin, h)
-            zero = np.zeros_like(t)
-            tmin = np.minimum(np.minimum(zero, nder*smin[k-1]), np.minimum((nder/2)*t, tt))
-            tmax = np.maximum(np.maximum(zero, nder*smin[k-1]), np.maximum((nder/2)*t, tt))
-            dper[k] = d[k] + self._minmod(tmin - d[k], tmax - d[k])
+            dper[[2, n-3]] = self._minmod(d[[2, n-3]], tmax[[0, -1]])
+            if n >= 7:
+                # M4 constraint at the interior nodes 3, ..., n-4
+                emin = self._minmod(e[:-1], e[1:])
+                tt = self._ttilde(3, n - 3, s, ds, emin, h)
+                t = (nder/2)*t[1:-1]
+                bound = nder*smin[2:n-4]
+                tmin = np.minimum(np.minimum(0.0, bound), np.minimum(t, tt))
+                tmax = np.maximum(np.maximum(0.0, bound), np.maximum(t, tt))
+                dk = d[3:n-3]
+                dper[3:n-3] = dk + self._minmod(tmin - dk, tmax - dk)
         return dper
 
 pchip = PchipInterpolator

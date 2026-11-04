@@ -52,7 +52,7 @@ Why:
 
 - **Quartic is more accurate on well-resolved smooth data**. Both give an $O(h^4)$ interpolant, but the quartic derivative approximation has a smaller error constant. With 321 samples, the maximum error is 3.9e-10 instead of 5.8e-9 for $\sin(x)$, and 4.2e-9 instead of 5.8e-8 for $e^{-x^2}$
 - **Cubic can be more accurate on coarse data**. The quartic approximation uses five neighbouring samples instead of four, so it relies on the data being smooth over a wider stencil. With only 11 samples of $e^{-x^2}$ on $[-3, 3]$, the maximum error is 5.2e-2 with quartic and 3.6e-2 with cubic, and the same happens with a steep $\tanh(5x)$ and Runge's function
-- **Quartic is about 1.3 times slower to construct**
+- **Quartic is about 10% slower to construct**
 
 ### Choosing between M3 and M4
 
@@ -63,7 +63,7 @@ Why:
 - **On most data the two are identical**. For smooth data the constraint only kicks in near points where the slope of the data is close to zero. At peaks and troughs both constraints relax in the same way, which is what gives Pchips its accuracy there. On $\sin$, $e^{-x^2}$, $\tanh$, Runge's function and others, M3 and M4 give exactly the same interpolant
 - **M4 is more accurate at flat inflection points**. M3 guarantees monotonicity by keeping the derivative at each sample between 0 and 3 times the smaller of the neighbouring slopes. Near a flat inflection point, the data slopes are tiny, so this clips the derivatives and accuracy drops to roughly $O(h^3)$, and erratically so. M4 uses extra information from neighbouring cubics to allow larger derivatives there and stays $O(h^4)$. For $x - \sin(x)$ on $[-2, 3.1]$ with 641 samples, the maximum error is 7.1e-10 with M3 and 1.0e-10 with M4 (see `test_m4_fourth_order_at_flat_inflection` in [test_vs_scipy.py](tests/test_vs_scipy.py)). For $x^3$, M4 is exact while M3 is not. If the flat point happens to be one of the samples, the two agree again
 - **M4 weakens the monotonicity guarantee**. Fourth-order accuracy is incompatible with monotonicity in general: there are monotone data which lie on a non-monotone cubic, and M4 reproduces the cubic. Huynh therefore only guarantees a monotone interpolant where the data are "q-monotone" (Theorem 3 in the paper), and in the two intervals at either end. On rough monotone data this matters: in 300 random monotone datasets, M4 gave an interpolant which decreases somewhere in 82 (equally spaced samples) and 141 (unequally spaced samples) of them, while M3 never did
-- **M4 is about 1.6 times slower to construct**
+- **M4 is about 1.4-1.6 times slower to construct**
 
 So if your data are noisy or irregular, or a monotone result is a hard requirement, stick with M3. If they are smooth and you need the extra accuracy near flat inflection points, use M4, and check the result for monotonicity if that matters.
 
@@ -93,7 +93,7 @@ In short: switch if your data come from a smooth underlying function and accurac
   - **On rough data it can be large**. In SciPy's `test_overshoot`, which interpolates 20 random values (one of the two expected failures in [test_scipy_suite.py](tests/test_scipy_suite.py)), Pchips leaves the range of the neighbouring samples in 3 of the 19 intervals, by up to 0.50 when the data span 0.86
 
   If that matters, e.g. for probabilities, concentrations or anything passed to `log`, stay with SciPy or clip the result
-- **Construction is 2-9 times slower** (see below). This only matters if you build interpolators in a hot loop
+- **Construction is 1.3-3 times slower** (see below). This only matters if you build interpolators in a hot loop
 - **Rough or noisy data gain little**, since the higher accuracy relies on the data being smooth
 
 ### Performance
@@ -102,10 +102,10 @@ Evaluating the interpolant, along with its derivatives and integrals, is exactly
 
 | Data | SciPy | Pchips (default) | Pchips (`approx_order='quartic'`, `mono_constraint='M4'`) |
 | --- | --- | --- | --- |
-| 20 points | 0.05 ms | 0.10 ms | 0.18 ms |
-| 1,000 points | 0.06 ms | 0.15 ms | 0.28 ms |
-| 100,000 points | 1.2 ms | 5.3 ms | 11.4 ms |
-| 50 points × 1,000 columns | 0.9 ms | 2.4 ms | 4.7 ms |
+| 20 points | 0.05 ms | 0.08 ms | 0.11 ms |
+| 1,000 points | 0.06 ms | 0.10 ms | 0.14 ms |
+| 100,000 points | 1.3 ms | 2.3 ms | 3.7 ms |
+| 50 points × 1,000 columns | 0.9 ms | 1.1 ms | 1.7 ms |
 
 ## Mathematical background
 
