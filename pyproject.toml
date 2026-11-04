@@ -1,15 +1,15 @@
 [build-system]
-requires = ["setuptools>=77.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.27", "hatch-fancy-pypi-readme>=25.1"]
+build-backend = "hatchling.build"
 
 [project]
 name = "pchips"
-version = "2.0.0"
+version = "1.0.0"
 authors = [
   { name="Victor Glazer" }
 ]
 description = "A drop-in replacement for scipy.interpolate.PchipInterpolator using H. T. Huynh's accurate monotone cubic interpolant."
-readme = "README.md"
+dynamic = ["readme"]
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
@@ -41,5 +41,77 @@ dev = [
     "matplotlib>=3.5",
 ]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/pchips"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "data", "README.md", "LICENSE"]
+
+# PyPI's copy of the README: README.md with links made absolute and LaTeX, which PyPI
+# cannot render, turned into plain text. The Mathematical background section is replaced
+# by a link to it on GitHub.
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/markdown"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+path = "README.md"
+end-before = "## Mathematical background"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+text = """## Mathematical background
+
+The mathematical background is written in LaTeX, which PyPI cannot display, so read it [on GitHub](https://github.com/vglazer/pchips#mathematical-background).
+
+"""
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+path = "README.md"
+start-at = "## Development"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = '\]\((assets/[^)]+)\)'
+replacement = '](https://raw.githubusercontent.com/vglazer/pchips/main/\1)'
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = '\]\((tests|data)\)'
+replacement = '](https://github.com/vglazer/pchips/tree/main/\1)'
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = '\]\((?!https?://|#)([^)]+)\)'
+replacement = '](https://github.com/vglazer/pchips/blob/main/\1)'
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = '\]\(#'
+replacement = '](https://github.com/vglazer/pchips#'
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = '\^2'
+replacement = '²'
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = '\^3'
+replacement = '³'
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = '\^4'
+replacement = '⁴'
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = 'e\^\{-x²\}'
+replacement = 'e^(−x²)'
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = '\\pi'
+replacement = 'π'
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = '\\pm '
+replacement = '±'
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = '\\(sin|tanh)'
+replacement = '\1'
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = '\$([^$\n]+)\$'
+replacement = '\1'
