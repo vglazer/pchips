@@ -1,4 +1,4 @@
-"""Generates the plots in GALLERY.md: uv run python scripts/make_gallery.py"""
+"""Generates the plots in the Gallery section of README.md: uv run python scripts/make_gallery.py"""
 
 import numpy as np
 import matplotlib
