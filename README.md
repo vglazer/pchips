@@ -6,7 +6,7 @@
 
 This is a Python port, produced using [Gemini CLI](https://github.com/google-gemini/gemini-cli) in an afternoon, of the accurate monotone cubic interpolant [originally implemented in MATLAB here](https://github.com/vglazer/USRA/tree/master/interpolation). It's meant to serve as a drop-in replacement for SciPy's [PchipInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html).
 
-All the logic is in [interpolate.py](src/pchips/interpolate.py). The main purpose of the [tests](tests) is to generate comparison plots.
+All the logic is in [interpolate.py](src/pchips/interpolate.py). The [tests](tests) compare it to SciPy, check the guarantees from Huynh's paper and generate comparison plots. [test_scipy_suite.py](tests/test_scipy_suite.py) runs SciPy's own `PchipInterpolator` tests against it.
 
 The algorithm, due to [H. T. Huynh](https://scholar.google.com/citations?user=ZXhGCtwAAAAJ&hl=en), is described in this [NASA Technical Memo](https://ntrs.nasa.gov/citations/19910011517), which is self-contained and quite readable. A nearly identical version was later published in the [SIAM Journal on Numerical Analysis](https://epubs.siam.org/doi/10.1137/0730004).
 
@@ -18,6 +18,29 @@ The algorithm, due to [H. T. Huynh](https://scholar.google.com/citations?user=ZX
 - `uv sync`
 - `uv run pytest`
 - Check out the comparison plots in the `plots` subdirectory
+
+## Usage
+
+Change the import and leave everything else as it is:
+
+```python
+# from scipy.interpolate import PchipInterpolator, pchip_interpolate
+from pchips import PchipInterpolator, pchip_interpolate
+
+interp = PchipInterpolator(x, y)            # also axis=..., extrapolate=...
+interp(u)                                   # also interp(u, nu=1)
+interp.derivative(), interp.antiderivative(), interp.integrate(a, b), interp.roots()
+```
+
+Like SciPy's version, `PchipInterpolator` is a [CubicHermiteSpline](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicHermiteSpline.html), so it has the same signature, methods, input validation, output shapes and extrapolation behavior. Two keyword-only options select the variant of Huynh's method:
+
+- `approx_order`: `'cubic'` (default) or `'quartic'`, the derivative approximation. `'quartic'` is more accurate on smooth data
+- `mono_constraint`: `'M3'` (default) or `'M4'`. M3 guarantees that monotone data give a monotone interpolant. M4 only guarantees this where the data are "q-monotone" (Theorem 3 in the paper), since a fourth-order interpolant which reproduces cubics cannot preserve monotonicity in general
+
+### Differences from SciPy
+
+- **The interpolant may overshoot the data near strict local extrema**. This is the price of accuracy: SciPy's interpolant always stays within the range of the data, which is what makes it only 2nd order accurate there. For example, non-negative data with a small positive minimum may give an interpolant which dips slightly below zero, so clip the result if that matters (e.g. for probabilities or concentrations)
+- With fewer than five data points, the result is identical to SciPy's
 
 ## Mathematical background
 

@@ -1,56 +1,90 @@
 import numpy as np
+import scipy.interpolate
 
-class PchipInterpolator:
+class PchipInterpolator(scipy.interpolate.CubicHermiteSpline):
     """
     PchipInterpolator: H.T. Huynh's accurate monotone cubic interpolant.
 
-    This class mimics the behavior of `scipy.interpolate.PchipInterpolator`
-    but uses H.T. Huyn's algorithm instead of F. N. Fritsch and J. Butland's.
+    This class is a drop-in replacement for `scipy.interpolate.PchipInterpolator`
+    but uses H.T. Huynh's algorithm instead of F. N. Fritsch and J. Butland's.
+    Like SciPy's version, it is a `CubicHermiteSpline`, so evaluation, `derivative`,
+    `antiderivative`, `integrate`, `roots`, `solve` and `extrapolate` all behave the same.
+
+    The interpolant is uniformly third or fourth-order accurate, and it preserves
+    monotonicity: with the default M3 constraint, monotone data give a monotone
+    interpolant. Unlike SciPy's version, however, it may overshoot the data near
+    strict local extrema, so it is not bounded by the data. For example, it can
+    dip below zero next to a small positive minimum.
+
+    With fewer than five data points, the derivatives are those of
+    `scipy.interpolate.PchipInterpolator`.
     """
 
-    def __init__(self, x, y, approx_order='cubic', mono_constraint='M3'):
+    def __init__(self, x, y, axis=0, extrapolate=None, *, approx_order='cubic', mono_constraint='M3'):
         """
         Initializes the interpolator.
 
         Args:
-            x (np.ndarray): The knot vector.
-            y (np.ndarray): The data vector.
+            x (array_like): The knot vector, strictly increasing.
+            y (array_like): The real data. Its length along `axis` must match `x`.
+            axis (int): The axis of `y` along which the data vary (default 0).
+            extrapolate (bool or 'periodic'): Whether to extrapolate outside the
+                                              data range (default True).
             approx_order (str): The order of the derivative approximation formula.
                                 Supported: 'cubic' (default), 'quartic'.
             mono_constraint (str): The monotonicity constraint type.
                                    Supported: 'M3' (default), 'M4'.
         """
-        if not isinstance(x, np.ndarray) or not isinstance(y, np.ndarray):
-            raise TypeError("x and y must be numpy arrays.")
-        if x.ndim != 1 or y.ndim != 1:
-            raise ValueError("x and y must be 1-dimensional.")
-        if x.shape != y.shape:
-            raise ValueError("x and y must have the same shape.")
-        if x.shape[0] < 5:
-            raise ValueError("There should be at least five data points.")
-        if not np.all(np.isfinite(x)) or not np.all(np.isfinite(y)):
-            raise ValueError("x and y must contain finite values.")
-
+        if approx_order not in ('cubic', 'quartic'):
+            raise ValueError(f"Unsupported approx_order: {approx_order}")
+        if mono_constraint not in ('M3', 'M4'):
+            raise ValueError(f"Unsupported mono_constraint: {mono_constraint}")
         self.approx_order = approx_order
         self.mono_constraint = mono_constraint
 
-        # Sort x and y
-        idx = np.argsort(x)
-        self.x = x[idx]
-        self.y = y[idx]
-        
-        h = np.diff(self.x)
-        if np.any(h <= 0):
-            raise ValueError("The data abscissae should be distinct and increasing.")
+        # Validate the input the same way as scipy.interpolate.PchipInterpolator
+        x, y = map(np.asarray, (x, y))
+        if np.issubdtype(x.dtype, np.complexfloating):
+            raise ValueError("`x` must contain real values.")
+        if np.issubdtype(y.dtype, np.complexfloating):
+            raise ValueError("`PchipInterpolator` only works with real values for `y`.")
+        x = x.astype(float)
+        y = y.astype(float)
+        axis = axis % y.ndim
+        if x.ndim != 1:
+            raise ValueError("`x` must be 1-dimensional.")
+        if x.shape[0] < 2:
+            raise ValueError("`x` must contain at least 2 elements.")
+        if x.shape[0] != y.shape[axis]:
+            raise ValueError(f"The length of `y` along `axis`={axis} doesn't match the length of `x`")
+        if not np.all(np.isfinite(x)):
+            raise ValueError("`x` must contain only finite values.")
+        if not np.all(np.isfinite(y)):
+            raise ValueError("`y` must contain only finite values.")
+        if np.any(np.diff(x) <= 0):
+            raise ValueError("`x` must be strictly increasing sequence.")
 
-        self.n = len(self.x)
-        
-        d = self._approxder()
-        d = self._perturbder(d)
-        self._compute_coeffs(d)
+        self.x = x
+        self.n = len(x)
+        y = np.moveaxis(y, axis, 0)
 
-    def _vecdiffs(self):
-        y_temp = self.y.copy()
+        if self.n < 5:
+            # Too few points for Huynh's derivative approximations
+            dydx = scipy.interpolate.PchipInterpolator(x, y).derivative()(x)
+        else:
+            # Compute the derivatives one column at a time
+            columns = y.reshape(self.n, int(np.prod(y.shape[1:])))
+            dydx = np.empty_like(columns)
+            for j in range(columns.shape[1]):
+                d = self._approxder(columns[:, j])
+                dydx[:, j] = self._perturbder(d, columns[:, j])
+            dydx = dydx.reshape(y.shape)
+
+        super().__init__(x, y, dydx, axis=0, extrapolate=extrapolate)
+        self.axis = axis
+
+    def _vecdiffs(self, y):
+        y_temp = y.copy()
         diffs = np.zeros((4, self.n - 1))
         for i in range(4):
             if i > 0:
@@ -64,9 +98,9 @@ class PchipInterpolator:
         f = diffs[3, :self.n-4]
         return s, ds, e, f
 
-    def _approxder(self):
+    def _approxder(self, y):
         d = np.zeros(self.n)
-        s, ds, e, f = self._vecdiffs()
+        s, ds, e, f = self._vecdiffs(y)
 
         if self.approx_order == 'cubic':
             for k in range(self.n - 3):
@@ -111,10 +145,10 @@ class PchipInterpolator:
                                     ds[k]   + emin[k-1]*(self.x[k]   - self.x[k+2]))
         return self._minmod(q1, q2)
 
-    def _perturbder(self, d):
+    def _perturbder(self, d, y):
         nder = 3
         dper = d.copy()
-        s, ds, e, f = self._vecdiffs()
+        s, ds, e, f = self._vecdiffs(y)
         h = np.diff(self.x)
         smin = np.array([self._minmod(s[k], s[k+1]) for k in range(self.n - 2)])
         dmin = np.array([self._minmod(ds[k], ds[k+1]) for k in range(self.n - 3)])
@@ -156,27 +190,28 @@ class PchipInterpolator:
             raise ValueError(f"Unsupported mono_constraint: {self.mono_constraint}")
         return dper
 
-    def _compute_coeffs(self, d):
-        h = np.diff(self.x)
-        delta = np.diff(self.y) / h
-        self.coeffs = np.zeros((self.n - 1, 4))
-        c3 = (d[:-1] - 2*delta + d[1:]) / h**2
-        c2 = (3*delta - 2*d[:-1] - d[1:]) / h
-        self.coeffs[:, 0] = c3
-        self.coeffs[:, 1] = c2
-        self.coeffs[:, 2] = d[:-1]
-        self.coeffs[:, 3] = self.y[:-1]
 
-    def __call__(self, u):
-        is_scalar = not isinstance(u, np.ndarray)
-        if is_scalar:
-            u = np.array([u])
-        indices = np.searchsorted(self.x, u, side='right') - 1
-        indices = np.clip(indices, 0, self.n - 2)
-        s = u - self.x[indices]
-        c3 = self.coeffs[indices, 0]
-        c2 = self.coeffs[indices, 1]
-        c1 = self.coeffs[indices, 2]
-        c0 = self.coeffs[indices, 3]
-        v = c0 + s * (c1 + s * (c2 + s * c3))
-        return v[0] if is_scalar else v
+pchip = PchipInterpolator
+
+
+def pchip_interpolate(xi, yi, x, der=0, axis=0, *, approx_order='cubic', mono_constraint='M3'):
+    """
+    Convenience function for pchips interpolation, a drop-in replacement for
+    `scipy.interpolate.pchip_interpolate`.
+
+    Args:
+        xi (array_like): The knot vector, strictly increasing.
+        yi (array_like): The real data. Its length along `axis` must match `xi`.
+        x (scalar or array_like): The points at which to evaluate the interpolant.
+        der (int or list): The derivatives to evaluate (default 0, the values).
+        axis (int): The axis of `yi` along which the data vary (default 0).
+        approx_order (str): See `PchipInterpolator`.
+        mono_constraint (str): See `PchipInterpolator`.
+    """
+    P = PchipInterpolator(xi, yi, axis=axis, approx_order=approx_order, mono_constraint=mono_constraint)
+    if der == 0:
+        return P(x)
+    elif np.isscalar(der):
+        return P.derivative(der)(x)
+    else:
+        return [P.derivative(nu)(x) for nu in der]
