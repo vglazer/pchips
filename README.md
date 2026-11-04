@@ -176,10 +176,10 @@ Evaluating the interpolant, along with its derivatives and integrals, is exactly
 
 | Data | SciPy | Pchips (default) | Pchips (`approx_order='quartic'`, `mono_constraint='M4'`) |
 | --- | --- | --- | --- |
-| 20 points | 0.05 ms | 0.08 ms (1.6× slower) | 0.11 ms (2.2× slower) |
-| 1,000 points | 0.06 ms | 0.10 ms (1.6× slower) | 0.14 ms (2.3× slower) |
-| 100,000 points | 1.3 ms | 2.3 ms (1.8× slower) | 3.7 ms (2.9× slower) |
-| 50 points × 1,000 columns | 0.9 ms | 1.1 ms (1.3× slower) | 1.7 ms (1.9× slower) |
+| 20&nbsp;points | 0.05&nbsp;ms | 0.08&nbsp;ms&nbsp;(1.6×&nbsp;slower) | 0.11&nbsp;ms&nbsp;(2.2×&nbsp;slower) |
+| 1,000&nbsp;points | 0.06&nbsp;ms | 0.10&nbsp;ms&nbsp;(1.6×&nbsp;slower) | 0.14&nbsp;ms&nbsp;(2.3×&nbsp;slower) |
+| 100,000&nbsp;points | 1.3&nbsp;ms | 2.3&nbsp;ms&nbsp;(1.8×&nbsp;slower) | 3.7&nbsp;ms&nbsp;(2.9×&nbsp;slower) |
+| 50&nbsp;points&nbsp;×&nbsp;1,000&nbsp;columns | 0.9&nbsp;ms | 1.1&nbsp;ms&nbsp;(1.3×&nbsp;slower) | 1.7&nbsp;ms&nbsp;(1.9×&nbsp;slower) |
 
 ## Mathematical background
 
