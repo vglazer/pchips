@@ -81,20 +81,20 @@ In short: switch if your data come from a smooth underlying function and accurac
   | $e^{-x^2}$ on $[-3, 3]$ | 2.6e-5 | 5.8e-8 | 4.2e-9 |
   | $\tanh(x)$ on $[-3, 3]$ (no extrema) | 2.1e-7 | 1.3e-8 | 1.4e-9 |
 
-  Put differently, Pchips with 41 samples of $\sin(x)$ is about as accurate as SciPy with 321, and the gap grows as you add samples.
-- **The same monotonicity guarantee**. With the default M3 constraint, monotone data give a monotone interpolant, just like SciPy's.
-- **Polynomials up to cubics are reproduced exactly**, along with their derivatives and integrals. SciPy's interpolant is not exact even for quadratics.
-- **Switching is a one-line change**. Only the import changes, and SciPy's own `PchipInterpolator` tests pass, apart from the two which check properties Huynh's method deliberately gives up (see [test_scipy_suite.py](tests/test_scipy_suite.py)).
+  Put differently, Pchips with 41 samples of $\sin(x)$ is about as accurate as SciPy with 321, and the gap grows as you add samples
+- **The same monotonicity guarantee**. With the default M3 constraint, monotone data give a monotone interpolant, just like SciPy's
+- **Polynomials up to cubics are reproduced exactly**, along with their derivatives and integrals. SciPy's interpolant is not exact even for quadratics
+- **Switching is a one-line change**. Only the import changes, and SciPy's own `PchipInterpolator` tests pass, apart from the two which check properties Huynh's method deliberately gives up (see [test_scipy_suite.py](tests/test_scipy_suite.py))
 
 ### Reasons not to switch
 
 - **The interpolant may overshoot the data near strict local extrema**. This is the price of accuracy: between any two neighbouring samples, SciPy's interpolant always stays between their values, which is exactly what limits it to $O(h^2)$ at peaks and troughs. How far Pchips overshoots depends on how smooth the data are:
-  - **On smooth data the overshoot is small**, and usually closer to the truth, since the underlying function typically peaks between samples. For example, data with a minimum of 0.02 can give an interpolant which dips to -0.004.
-  - **On rough data it can be large**. In SciPy's `test_overshoot`, which interpolates 20 random values (one of the two expected failures in [test_scipy_suite.py](tests/test_scipy_suite.py)), Pchips leaves the range of the neighbouring samples in 3 of the 19 intervals, by up to 0.50 when the data span 0.86.
+  - **On smooth data the overshoot is small**, and usually closer to the truth, since the underlying function typically peaks between samples. For example, data with a minimum of 0.02 can give an interpolant which dips to -0.004
+  - **On rough data it can be large**. In SciPy's `test_overshoot`, which interpolates 20 random values (one of the two expected failures in [test_scipy_suite.py](tests/test_scipy_suite.py)), Pchips leaves the range of the neighbouring samples in 3 of the 19 intervals, by up to 0.50 when the data span 0.86
 
   If that matters, e.g. for probabilities, concentrations or anything passed to `log`, stay with SciPy or clip the result
-- **Construction is 1.3-3 times slower** (see below). This only matters if you build interpolators in a hot loop.
-- **Rough or noisy data gain little**, since the higher accuracy relies on the data being smooth.
+- **Construction is 1.3-3 times slower** (see below). This only matters if you build interpolators in a hot loop
+- **Rough or noisy data gain little**, since the higher accuracy relies on the data being smooth
 
 ### Performance
 
