@@ -86,7 +86,11 @@ In short: switch if your data come from a smooth underlying function and accurac
 
 ### Reasons not to switch
 
-- **The interpolant may overshoot the data near strict local extrema**. This is the price of accuracy: SciPy's interpolant always stays within the range of the data, which is exactly what limits it to $O(h^2)$ there. For example, data with a minimum of 0.02 can give an interpolant which dips to -0.004. If that matters, e.g. for probabilities, concentrations or anything passed to `log`, stay with SciPy or clip the result
+- **The interpolant may overshoot the data near strict local extrema**. This is the price of accuracy: between any two neighbouring samples, SciPy's interpolant always stays between their values, which is exactly what limits it to $O(h^2)$ at peaks and troughs. How far Pchips overshoots depends on how smooth the data are:
+  - **On smooth data the overshoot is small**, and usually closer to the truth, since the underlying function typically peaks between samples. For example, data with a minimum of 0.02 can give an interpolant which dips to -0.004
+  - **On rough data it can be large**. In SciPy's `test_overshoot`, which interpolates 20 random values (one of the two expected failures in [test_scipy_suite.py](tests/test_scipy_suite.py)), Pchips leaves the range of the neighbouring samples in 3 of the 19 intervals, by up to 0.50 when the data span 0.86
+
+  If that matters, e.g. for probabilities, concentrations or anything passed to `log`, stay with SciPy or clip the result
 - **Construction is 2-9 times slower** (see below). This only matters if you build interpolators in a hot loop
 - **Rough or noisy data gain little**, since the higher accuracy relies on the data being smooth
 
