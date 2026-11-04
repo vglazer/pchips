@@ -88,12 +88,18 @@ A sharp peak which happens to fall on a sample, so neither interpolant overshoot
 
 ## Installation
 
-Pchips requires Python 3.10 or later, NumPy 1.23.5 or later and SciPy 1.10 or later. It is not on PyPI, so install it from GitHub:
+Pchips is [on PyPI](https://pypi.org/project/pchips/) and requires Python 3.10 or later, NumPy 1.23.5 or later and SciPy 1.10 or later:
+
+```sh
+pip install pchips
+# or
+uv add pchips
+```
+
+To get the latest unreleased changes, install it from GitHub instead:
 
 ```sh
 pip install git+https://github.com/vglazer/pchips
-# or
-uv add git+https://github.com/vglazer/pchips
 ```
 
 ## Usage
