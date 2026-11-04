@@ -1,6 +1,6 @@
 # Pchips
 
-![sin(x) from 11 samples: SciPy cuts the peak off flat, Pchips follows it](assets/gallery/preserving_vs_imposing.png)
+![sin(x) from 11 samples: SciPy cuts the peak off flat, Pchips follows it](assets/preserving_vs_imposing.png)
 
 ## Overview
 
@@ -22,31 +22,31 @@ In the plot at the top of this page, the peak of $\sin(x)$ falls exactly between
 
 #### Accuracy as the samples get denser
 
-![Maximum error for sin(x) vs number of samples](assets/gallery/convergence.png)
+![Maximum error for sin(x) vs number of samples](assets/convergence.png)
 
 Flattening every peak and trough limits SciPy's interpolant to $O(h^2)$ accuracy, while Pchips is $O(h^4)$: doubling the number of samples cuts SciPy's error by a factor of 4, and Pchips' by 16. With 641 samples, the maximum error is 3.6e-6 for SciPy and 3.6e-10 for Pchips.
 
 #### Monotone data stay monotone
 
-![Akima's data with a cubic spline, SciPy and Pchips](assets/gallery/monotone_data.png)
+![Akima's data with a cubic spline, SciPy and Pchips](assets/monotone_data.png)
 
 On monotone data, both PCHIPs give a monotone interpolant with no overshoot, unlike a cubic spline, which dips to 4.74 on data which never go below 10 and bulges above 60 between the samples at 50 and 60.
 
 #### The price: overshoot on rough data
 
-![20 random values, SciPy vs Pchips](assets/gallery/overshoot_on_rough_data.png)
+![20 random values, SciPy vs Pchips](assets/overshoot_on_rough_data.png)
 
 Relaxing the constraint near peaks and troughs means Pchips can overshoot the data there. On smooth data the overshoot is small and usually closer to the truth, as in the plot at the top. On rough data it can be large: on these 20 random values in [0.08, 0.93], from SciPy's own `test_overshoot`, Pchips reaches 1.43, while SciPy stays within the range of the data.
 
 ### Cubic versus quartic
 
-![Maximum error for exp(-x^2) vs number of samples, SciPy and both approximations](assets/gallery/cubic_vs_quartic.png)
+![Maximum error for exp(-x^2) vs number of samples, SciPy and both approximations](assets/cubic_vs_quartic.png)
 
 Both derivative approximations give an $O(h^4)$ interpolant, but the quartic one has a smaller error constant: with 641 samples of $e^{-x^2}$, the maximum error is 3.6e-9 with cubic and 2.5e-10 with quartic (and 6.5e-6 with SciPy). With very few samples, however, quartic can be worse, since it relies on the data being smooth over five neighbouring samples rather than four: with 11 samples, the error is 3.6e-2 with cubic and 5.2e-2 with quartic. Use quartic once the samples resolve the shape of the data.
 
 ### M3 versus M4
 
-![M3 vs M4: error for x - sin(x), and monotone data](assets/gallery/m3_vs_m4.png)
+![M3 vs M4: error for x - sin(x), and monotone data](assets/m3_vs_m4.png)
 
 **Left**: on smooth, well-sampled data, M3 and M4 give the same interpolant except near a flat inflection point, where the slope of a monotone function drops to zero between samples, as for $x - \sin(x)$ at $x = 0$. There, M3 clips the derivatives to keep the interpolant monotone and loses accuracy: with 41 samples, the maximum error is 1.8e-5 with M3 and 6.7e-6 with M4.
 
@@ -58,31 +58,31 @@ These are the data sets in [data](data), which the tests also use. Each plot com
 
 #### Hyman
 
-![Hyman data, SciPy vs Pchips](assets/gallery/dataset_hyman.png)
+![Hyman data, SciPy vs Pchips](assets/dataset_hyman.png)
 
 Nine samples of $e^{-x^2}$, with the peak between the samples at $\pm 0.4$. SciPy cuts the peak off flat at 0.852, an error of 0.148, while Pchips reaches 0.988, an error of 0.012. Away from the peak, nine samples are too few for either interpolant to follow the curve closely, and Pchips is off by up to 0.128 at $x = 1.06$.
 
 #### Moler
 
-![Moler data, SciPy vs Pchips](assets/gallery/dataset_moler.png)
+![Moler data, SciPy vs Pchips](assets/dataset_moler.png)
 
 Rough, non-monotone data with plateaus and sharp turns. SciPy stays within the data, flat across the plateau at 1.2. Pchips treats the two samples at 1.2 as either side of a peak and rounds it off up to 1.57, then dips to -0.118 between the samples at 0.1 and 0. This is the overshoot described in [Reasons not to switch](#reasons-not-to-switch): if the plateau and the zero floor are real features of the data, SciPy is the better choice here.
 
 #### Akima
 
-![Akima data, SciPy vs Pchips cubic and quartic](assets/gallery/dataset_akima.png)
+![Akima data, SciPy vs Pchips cubic and quartic](assets/dataset_akima.png)
 
 Monotone data with a sharp rise, one of the test cases in Huynh's paper. All three interpolants are monotone and stay within the data. SciPy and Pchips' default differ by at most 1.8, on the final rise from 60 to 85. The quartic approximation, which draws on more neighbouring samples, stands out between the samples at 50 and 60: it levels off close to 60 (59.4 at $x = 13.5$, against 57.0 and 56.8), then rises more steeply to 85. (See [above](#monotone-data-stay-monotone) for a cubic spline on the same data.)
 
 #### RPN 14
 
-![RPN 14 data, SciPy vs Pchips](assets/gallery/dataset_rpn14.png)
+![RPN 14 data, SciPy vs Pchips](assets/dataset_rpn14.png)
 
 Monotone data which rise steeply and then level off, from Fritsch and Carlson's paper on monotone interpolation, and the other test case in Huynh's paper. SciPy and Pchips are both monotone and differ by at most 0.036, mostly near the bottom of the rise.
 
 #### Titanium
 
-![Titanium data, SciPy vs Pchips](assets/gallery/dataset_titanium.png)
+![Titanium data, SciPy vs Pchips](assets/dataset_titanium.png)
 
 A sharp peak which happens to fall on a sample, so neither interpolant overshoots it, and both stay within the data. They differ by at most 0.12, at the foot of the peak. Pchips is flat for a moment at the sample at $x = 855$: its derivative estimate there came out with the wrong sign for the rising data, so the monotonicity constraint set it to zero.
 

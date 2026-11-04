@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pchips
 
-OUT = Path(__file__).parent.joinpath("../assets/gallery").resolve()
+OUT = Path(__file__).parent.joinpath("../assets").resolve()
 DATA = Path(__file__).parent.joinpath("../data").resolve()
 
 # Categorical slots in fixed order, plus neutral ink for data and the true function
