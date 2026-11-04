@@ -35,12 +35,58 @@ interp.derivative(), interp.antiderivative(), interp.integrate(a, b), interp.roo
 Like SciPy's version, `PchipInterpolator` is a [CubicHermiteSpline](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicHermiteSpline.html), so it has the same signature, methods, input validation, output shapes and extrapolation behavior. Two keyword-only options select the variant of Huynh's method:
 
 - `approx_order`: `'cubic'` (default) or `'quartic'`, the derivative approximation. `'quartic'` is more accurate on smooth data
-- `mono_constraint`: `'M3'` (default) or `'M4'`. M3 guarantees that monotone data give a monotone interpolant. M4 only guarantees this where the data are "q-monotone" (Theorem 3 in the paper), since a fourth-order interpolant which reproduces cubics cannot preserve monotonicity in general
+- `mono_constraint`: `'M3'` (default) or `'M4'`, the monotonicity constraint. See below for when to use which
 
-### Differences from SciPy
+With fewer than five data points, the result is identical to SciPy's.
 
-- **The interpolant may overshoot the data near strict local extrema**. This is the price of accuracy: SciPy's interpolant always stays within the range of the data, which is what makes it only 2nd order accurate there. For example, non-negative data with a small positive minimum may give an interpolant which dips slightly below zero, so clip the result if that matters (e.g. for probabilities or concentrations)
-- With fewer than five data points, the result is identical to SciPy's
+### Choosing between M3 and M4
+
+**Use M3, the default, unless your data are smooth samples of a monotone function whose slope drops to zero somewhere between the samples**, i.e. a flat inflection point such as $x - \sin(x)$ at $x = 0$ or $x^3$ at $x = 0$.
+
+Why:
+
+- **On most data the two are identical**. For smooth data the constraint only kicks in near points where the slope of the data is close to zero. At peaks and troughs both constraints relax in the same way, which is what gives Pchips its accuracy there. On $\sin$, $e^{-x^2}$, $\tanh$, Runge's function and others, M3 and M4 give exactly the same interpolant
+- **M4 is more accurate at flat inflection points**. M3 guarantees monotonicity by keeping the derivative at each sample between 0 and 3 times the smaller of the neighbouring slopes. Near a flat inflection point, the data slopes are tiny, so this clips the derivatives and accuracy drops to roughly $O(h^3)$, and erratically so. M4 uses extra information from neighbouring cubics to allow larger derivatives there and stays $O(h^4)$. For $x - \sin(x)$ on $[-2, 3.1]$ with 641 samples, the maximum error is 7.1e-10 with M3 and 1.0e-10 with M4 (see `test_m4_fourth_order_at_flat_inflection` in [test_vs_scipy.py](tests/test_vs_scipy.py)). For $x^3$, M4 is exact while M3 is not. If the flat point happens to be one of the samples, the two agree again
+- **M4 weakens the monotonicity guarantee**. Fourth-order accuracy is incompatible with monotonicity in general: there are monotone data which lie on a non-monotone cubic, and M4 reproduces the cubic. Huynh therefore only guarantees a monotone interpolant where the data are "q-monotone" (Theorem 3 in the paper), and in the two intervals at either end. On rough monotone data this matters: in 300 random monotone datasets, M4 gave an interpolant which decreases somewhere in 82 (equally spaced samples) and 141 (unequally spaced samples) of them, while M3 never did
+- **M4 is about 1.6 times slower to construct**
+
+So if your data are noisy or irregular, or a monotone result is a hard requirement, stick with M3. If they are smooth and you need the extra accuracy near flat inflection points, use M4, and check the result for monotonicity if that matters.
+
+## Should you switch from SciPy?
+
+In short: switch if your data come from a smooth underlying function and accuracy matters, especially near peaks and troughs. Stay with SciPy if your code relies on the interpolant never leaving the range of the data.
+
+### Reasons to switch
+
+- **Much higher accuracy near local extrema**. SciPy's interpolant flattens out at every local maximum and minimum, which makes it only $O(h^2)$ accurate there. Pchips is uniformly $O(h^4)$. Here is the maximum error with 321 equally spaced samples (see `test_convergence_vs_scipy` in [test_vs_scipy.py](tests/test_vs_scipy.py)):
+
+  | Function | SciPy | Pchips (default) | Pchips (`approx_order='quartic'`) |
+  | --- | --- | --- | --- |
+  | $\sin(x)$ on $[0, 2\pi]$ | 1.4e-5 | 5.8e-9 | 3.9e-10 |
+  | $e^{-x^2}$ on $[-3, 3]$ | 2.6e-5 | 5.8e-8 | 4.2e-9 |
+  | $\tanh(x)$ on $[-3, 3]$ (no extrema) | 2.1e-7 | 1.3e-8 | 1.4e-9 |
+
+  Put differently, Pchips with 41 samples of $\sin(x)$ is about as accurate as SciPy with 321, and the gap grows as you add samples
+- **The same monotonicity guarantee**. With the default M3 constraint, monotone data give a monotone interpolant, just like SciPy's
+- **Polynomials up to cubics are reproduced exactly**, along with their derivatives and integrals. SciPy's interpolant is not exact even for quadratics
+- **Switching is a one-line change**. Only the import changes, and SciPy's own `PchipInterpolator` tests pass, apart from the two which check properties Huynh's method deliberately gives up (see [test_scipy_suite.py](tests/test_scipy_suite.py))
+
+### Reasons not to switch
+
+- **The interpolant may overshoot the data near strict local extrema**. This is the price of accuracy: SciPy's interpolant always stays within the range of the data, which is exactly what limits it to $O(h^2)$ there. For example, data with a minimum of 0.02 can give an interpolant which dips to -0.004. If that matters, e.g. for probabilities, concentrations or anything passed to `log`, stay with SciPy or clip the result
+- **Construction is 2-9 times slower** (see below). This only matters if you build interpolators in a hot loop
+- **Rough or noisy data gain little**, since the higher accuracy relies on the data being smooth
+
+### Performance
+
+Evaluating the interpolant, along with its derivatives and integrals, is exactly as fast as SciPy's, since both use the same `CubicHermiteSpline` code: about 0.5 ms for 100,000 points. Construction does more work, because Huynh's method uses higher-order divided differences and a more elaborate monotonicity constraint. Best of 5 runs on an Apple M3 Max with Python 3.13, NumPy 2.3 and SciPy 1.16:
+
+| Data | SciPy | Pchips (default) | Pchips (`approx_order='quartic'`, `mono_constraint='M4'`) |
+| --- | --- | --- | --- |
+| 20 points | 0.05 ms | 0.10 ms | 0.18 ms |
+| 1,000 points | 0.06 ms | 0.15 ms | 0.28 ms |
+| 100,000 points | 1.2 ms | 5.3 ms | 11.4 ms |
+| 50 points × 1,000 columns | 0.9 ms | 2.4 ms | 4.7 ms |
 
 ## Mathematical background
 

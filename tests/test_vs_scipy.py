@@ -106,11 +106,11 @@ def test_m4_ttilde_exact_for_cubics():
     x = random_knots(np.random.default_rng(5), 10)
     y = x**3 - 4*x**2 + x
     interp = pchips.PchipInterpolator(x, y, mono_constraint='M4')
-    s, ds, e, _ = interp._vecdiffs(y)
+    s, ds, e, _ = interp._vecdiffs(y[:, None])
     emin = minmod(e[:-1], e[1:])
-    h = np.diff(x)
-    for k in range(3, len(x) - 3):
-        np.testing.assert_allclose(interp._ttilde(k, s, ds, emin, h), 3*x[k]**2 - 8*x[k] + 1, rtol=1e-10)
+    h = np.diff(x)[:, None]
+    k = np.arange(3, len(x) - 3)
+    np.testing.assert_allclose(interp._ttilde(k, s, ds, emin, h)[:, 0], 3*x[k]**2 - 8*x[k] + 1, rtol=1e-10)
 
 @pytest.mark.parametrize("config", CONFIGURATIONS)
 def test_reproduces_linear(config):
@@ -357,3 +357,19 @@ def test_pchip_interpolate(config):
     values, slopes = pchips.pchip_interpolate(x, y, eval_points, der=[0, 1], axis=1, **config)
     np.testing.assert_array_equal(values, interp(eval_points))
     np.testing.assert_array_equal(slopes, interp.derivative()(eval_points))
+
+@pytest.mark.parametrize("approx_order", ['cubic', 'quartic'])
+def test_m4_fourth_order_at_flat_inflection(approx_order):
+    # x - sin(x) is monotone, and its slope vanishes at 0, which is not a knot.
+    # M3 clips the derivatives there and loses accuracy, M4 stays fourth order.
+    f, a, b = (lambda x: x - np.sin(x)), -2, 3.1
+    eval_points = np.linspace(a, b, 40001)
+    errors = {}
+    for constraint in ('M3', 'M4'):
+        errors[constraint] = []
+        for n in [41, 81, 161, 321, 641]:
+            x = np.linspace(a, b, n)
+            interp = pchips.PchipInterpolator(x, f(x), approx_order=approx_order, mono_constraint=constraint)
+            errors[constraint].append(np.max(np.abs(interp(eval_points) - f(eval_points))))
+    assert np.all(observed_orders(np.array(errors['M4'])) > 3.5)
+    assert errors['M3'][-1] > 3 * errors['M4'][-1]
