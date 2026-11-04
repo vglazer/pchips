@@ -103,6 +103,14 @@ class PchipInterpolator:
     def _minmod(self, a, b):
         return (np.sign(a) + np.sign(b)) / 2 * np.minimum(np.abs(a), np.abs(b))
 
+    def _ttilde(self, k, s, ds, emin, h):
+        # Slopes at x[k] of the cubics on [x[k-1], x[k]] and [x[k], x[k+1]] (Huynh, 4.8a,b and 4.11)
+        q1 = s[k-1] + h[k-1]*self._minmod(ds[k-2] + emin[k-3]*(self.x[k]   - self.x[k-2]),
+                                    ds[k-1] + emin[k-2]*(self.x[k]   - self.x[k+1]))
+        q2 = s[k]   - h[k]  *self._minmod(ds[k-1] + emin[k-2]*(self.x[k]   - self.x[k-1]),
+                                    ds[k]   + emin[k-1]*(self.x[k]   - self.x[k+2]))
+        return self._minmod(q1, q2)
+
     def _perturbder(self, d):
         nder = 3
         dper = d.copy()
@@ -126,10 +134,9 @@ class PchipInterpolator:
             emin = np.array([self._minmod(e[k], e[k+1]) for k in range(self.n - 4)])
             dper[0] = self._minmod(d[0], nder * s[0])
             dper[self.n-1] = self._minmod(d[self.n-1], nder * s[self.n-2])
-            dper[1] = np.sign(d[1]) * np.minimum(np.abs(d[1]), nder * np.abs(s[0]))
-            dper[1] = np.sign(dper[1]) * np.minimum(np.abs(dper[1]), nder * np.abs(s[1]))
-            dper[self.n-2] = np.sign(d[self.n-2]) * np.minimum(np.abs(d[self.n-2]), nder*np.abs(s[self.n-3]))
-            dper[self.n-2] = np.sign(dper[self.n-2]) * np.minimum(np.abs(dper[self.n-2]), nder*np.abs(s[self.n-2]))
+            # MP constraint next to the endpoints (Huynh, section 5)
+            dper[1] = self._minmod(d[1], nder * self._minmod(s[0], s[1]))
+            dper[self.n-2] = self._minmod(d[self.n-2], nder*self._minmod(s[self.n-3], s[self.n-2]))
             t = self._minmod(s[1] + dmin[0]*(self.x[2] - self.x[1]), s[2] + dmin[1]*(self.x[2] - self.x[3]))
             tmax = np.sign(t)*max(nder*abs(smin[1]), (nder/2)*abs(t))
             dper[2] = self._minmod(d[2], tmax)
@@ -139,12 +146,8 @@ class PchipInterpolator:
             for k in range(3, self.n - 3):
                 p1 = s[k-1] + dmin[k-2]*(self.x[k] - self.x[k-1])
                 p2 = s[k]   + dmin[k-1]*(self.x[k] - self.x[k+1])
-                q1 = s[k-1] - h[k-1]*self._minmod(ds[k-2] + emin[k-3]*(self.x[k-1] - self.x[k-2]),
-                                            ds[k-1] + emin[k-2]*(self.x[k-1] - self.x[k+1]))
-                q2 = s[k]   - h[k]  *self._minmod(ds[k-1] + emin[k-2]*(self.x[k]   - self.x[k-1]),
-                                            ds[k]   + emin[k-1]*(self.x[k]   - self.x[k+2]))
                 t  = self._minmod(p1,p2)
-                tt = self._minmod(q1,q2)
+                tt = self._ttilde(k, s, ds, emin, h)
                 vec = np.array([0, nder*smin[k-1], (nder/2)*t, tt])
                 min_vec = np.min(vec)
                 max_vec = np.max(vec)
