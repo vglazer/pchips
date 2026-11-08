@@ -225,10 +225,10 @@ Evaluating the interpolant, along with its derivatives and integrals, is exactly
 ```sh
 uv run python scripts/make_gallery.py      # redraw the README plots
 uv run python scripts/benchmark_scipy.py   # time against SciPy (the Performance section)
-uv run python scripts/benchmark_usra.py    # time against the MATLAB original (needs Octave and USRA)
+uv run python scripts/benchmark_octave.py  # time against the original Octave implementation
 ```
 
-The second benchmark needs [GNU Octave](https://octave.org) and a clone of [USRA](https://github.com/vglazer/USRA/tree/master/interpolation), the GitHub repository with the original MATLAB implementation, next to this one.
+The Octave benchmark needs [GNU Octave](https://octave.org) and a clone of the repository holding the [original Octave implementation](https://github.com/vglazer/USRA/tree/master/interpolation), next to this one.
 
 To release a new version:
 

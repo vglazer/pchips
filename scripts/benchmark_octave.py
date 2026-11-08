@@ -1,16 +1,17 @@
-"""Time constructing Pchips against the original MATLAB implementation, run under GNU Octave.
+"""Time constructing Pchips against the original Octave implementation.
 
 Only construction is timed. Evaluation is done by Octave's ppval and SciPy's PPoly code,
 not by either implementation, so it says nothing about the port.
 
-The MATLAB original is pchint in vglazer/USRA (interpolation/hermite). Pchips' 'cubic' and
-'quartic' derivative approximations are its appord = 32 and 44 (Newton form). Both sides
+The original Octave implementation is pchint, in interpolation/hermite at
+https://github.com/vglazer/USRA. Pchips' 'cubic' and 'quartic' derivative approximations are
+its appord = 32 and 44 (Newton form). Both sides
 build the interpolant from the same data, read from the same files, and the times are the
 best of several runs, measured inside each process so that start-up is not counted. The data
 are those of benchmark_scipy.py. As a check, the script also reports how far apart the two
 sets of derivatives are.
 
-Usage: uv run python scripts/benchmark_usra.py [--usra PATH] [--repeats N]
+Usage: uv run python scripts/benchmark_octave.py [--original PATH] [--repeats N]
 """
 
 import argparse
@@ -25,7 +26,8 @@ from pchips import PchipInterpolator
 from benchmark_scipy import CASES, best_of, dataset
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_USRA = ROOT.parent / 'USRA' / 'interpolation' / 'hermite'
+# Where the original lives in a clone of its repository, next to this one
+DEFAULT_ORIGINAL = ROOT.parent / 'USRA' / 'interpolation' / 'hermite'
 
 # (label, Pchips options, MATLAB appord, MATLAB constraint)
 SETTINGS = [
@@ -34,7 +36,7 @@ SETTINGS = [
 ]
 
 OCTAVE = r"""
-addpath('{usra}/cubic'); addpath('{usra}/Lib');
+addpath('{original}/cubic'); addpath('{original}/Lib');
 function y = rd(p, m, n)
   % NumPy writes row-major, so an (n, m) array reads in as an m-by-n matrix: one data set
   % per row, the layout pchint expects
@@ -50,8 +52,8 @@ printf('%.9g\n', best);
 """
 
 
-def octave_build(usra, workdir, n, m, appord, constr, repeats):
-    script = OCTAVE.format(usra=usra, dir=workdir, n=n, m=m, appord=appord,
+def octave_build(original, workdir, n, m, appord, constr, repeats):
+    script = OCTAVE.format(original=original, dir=workdir, n=n, m=m, appord=appord,
                            constr=constr, repeats=repeats)
     out = subprocess.run(['octave', '--no-gui', '--quiet', '--eval', script],
                          capture_output=True, text=True, check=True).stdout
@@ -68,11 +70,11 @@ def ms(t):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument('--usra', type=Path, default=DEFAULT_USRA,
-                        help='path to USRA/interpolation/hermite')
+    parser.add_argument('--original', type=Path, default=DEFAULT_ORIGINAL,
+                        help="path to the original's interpolation/hermite directory")
     parser.add_argument('--repeats', type=int, default=7)
     args = parser.parse_args()
-    usra = args.usra.resolve()
+    original = args.original.resolve()
     version = subprocess.run(['octave', '--version'], capture_output=True,
                              text=True, check=True).stdout.splitlines()[0]
     print(version)
@@ -84,7 +86,7 @@ def main():
             x.tofile(workdir / 'x.bin')
             y.tofile(workdir / 'y.bin')
             for name, opts, appord, constr in SETTINGS:
-                ob, od = octave_build(usra, workdir, n, m, appord, constr, args.repeats)
+                ob, od = octave_build(original, workdir, n, m, appord, constr, args.repeats)
                 pb = best_of(lambda: PchipInterpolator(x, y, **opts), args.repeats)
                 pd = PchipInterpolator(x, y, **opts).c[2].reshape(od.shape)
                 diff = np.max(np.abs(pd - od)) / np.max(np.abs(od))
