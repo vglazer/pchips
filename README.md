@@ -7,7 +7,7 @@
 
 ## Overview
 
-Pchips is a **monotonicity-preserving piecewise cubic Hermite interpolant** that is **fourth-order accurate, including at peaks and troughs**. It is a drop-in replacement for SciPy's [PchipInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html).
+Pchips is a **monotonicity-preserving piecewise cubic Hermite interpolant** that is **fourth-order accurate, including at peaks and troughs**. It is a drop-in replacement for SciPy's [PchipInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html), and [just as fast to evaluate](#performance). See [Should you switch from SciPy?](#should-you-switch-from-scipy) for the trade-offs.
 
 Classical monotone Hermite interpolants, SciPy's included, _impose_ monotonicity: they flatten the interpolant at every local maximum and minimum, which cuts peaks off and limits them to $O(h^2)$ accuracy. Pchips only _preserves_ monotonicity: where the data are monotone, so is the interpolant, but the constraint is relaxed near strict local extrema, so the interpolant follows the data through them and stays $O(h^4)$ accurate.
 
