@@ -33,7 +33,7 @@ uv run python scripts/benchmark_octave.py  # time against the original (PORTING.
 
 ## Releasing
 
-1. Bump `version` in [pyproject.toml](pyproject.toml), then commit and push.
+1. Bump `version` in [pyproject.toml](pyproject.toml) and run `uv lock`, then commit both and push.
 2. [Create a release](https://github.com/vglazer/pchips/releases/new) on GitHub with a new tag `v`
    followed by that version, e.g. `v1.0.8`.
 3. The [publish workflow](.github/workflows/publish.yml) then runs the tests, builds the package and
