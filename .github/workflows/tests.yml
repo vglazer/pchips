@@ -30,7 +30,7 @@ jobs:
       - name: Install
         run: |
           uv venv --python ${{ matrix.python }}
-          uv pip install . pytest matplotlib ${{ matrix.pins }}
+          uv pip install . pytest matplotlib nbformat nbclient ipykernel ${{ matrix.pins }}
       - name: Show versions
         run: .venv/bin/python -c "import sys, numpy, scipy; print(sys.version, numpy.__version__, scipy.__version__)"
       - name: Test
