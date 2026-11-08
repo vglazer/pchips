@@ -41,7 +41,7 @@ def data_cell():
 
 
 cells = [
-    md(f"""
+    md("""
 # Pchips quickstart
 
 [Pchips](https://github.com/vglazer/pchips) is a drop-in replacement for SciPy's

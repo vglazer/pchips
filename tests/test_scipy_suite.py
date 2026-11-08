@@ -36,13 +36,14 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import warnings
 import io
-import numpy as np
-from numpy.testing import assert_allclose, assert_array_almost_equal
-import pytest
+import warnings
 
-from pchips import pchip, PchipInterpolator, pchip_interpolate
+import numpy as np
+import pytest
+from numpy.testing import assert_allclose, assert_array_almost_equal
+
+from pchips import PchipInterpolator, pchip, pchip_interpolate
 
 
 def xp_assert_close(actual, desired, **kwargs):
@@ -109,7 +110,6 @@ def test_deriv_shapes():
         class P(PchipInterpolator):
             def __call__(self, x):
                 return PchipInterpolator.__call__(self, x, 1)
-            pass
         return P(x, y, axis)
 
     for ip in [pchip_deriv, pchip_deriv2, pchip_deriv_inplace,

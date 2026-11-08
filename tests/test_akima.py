@@ -1,10 +1,12 @@
 
+from pathlib import Path
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-import matplotlib.pyplot as plt
+from scipy import interpolate
+
 import pchips
-import scipy.interpolate as interpolate
-from pathlib import Path
 
 CONFIGURATIONS = [
     {'approx_order': 'cubic', 'mono_constraint': 'M4'},

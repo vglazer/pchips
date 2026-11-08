@@ -43,6 +43,7 @@ dev = [
     "nbformat>=5",
     "nbclient>=0.10",
     "ipykernel>=6",
+    "ruff==0.17.4",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -119,3 +120,13 @@ replacement = '\1'
 [[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
 pattern = '\$([^$\n]+)\$'
 replacement = '\1'
+
+[tool.ruff.lint]
+# Ruff's defaults, plus sorted imports. Lambdas assigned to names are fine in tests and examples.
+extend-select = ["I"]
+ignore = ["E731"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["pchips"]
+# The benchmark scripts import each other
+known-local-folder = ["benchmark_scipy"]

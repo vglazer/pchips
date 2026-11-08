@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.interpolate
 
+
 class PchipInterpolator(scipy.interpolate.CubicHermiteSpline):
     """
     PchipInterpolator: H.T. Huynh's accurate monotone cubic interpolant.
@@ -154,7 +155,7 @@ class PchipInterpolator(scipy.interpolate.CubicHermiteSpline):
         nder = 3
         n = self.n
         dper = d.copy()
-        s, ds, e, f = diffs
+        s, ds, e, _ = diffs
         h = np.diff(self._knots)[:, None]
         smin = self._minmod(s[:-1], s[1:])
         dmin = self._minmod(ds[:-1], ds[1:])

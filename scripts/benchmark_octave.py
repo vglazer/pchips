@@ -17,6 +17,7 @@ Usage: uv run python scripts/benchmark_octave.py [--original PATH] [--repeats N]
 import argparse
 import subprocess
 import tempfile
+from functools import partial
 from pathlib import Path
 
 import numpy as np
@@ -31,8 +32,8 @@ DEFAULT_ORIGINAL = ROOT.parent / 'USRA' / 'interpolation' / 'hermite'
 
 # (label, Pchips options, MATLAB appord, MATLAB constraint)
 SETTINGS = [
-    ('default', dict(approx_order='cubic', mono_constraint='M3'), 32, 'M3'),
-    ('quartic, M4', dict(approx_order='quartic', mono_constraint='M4'), 44, 'M4'),
+    ('default', {'approx_order': 'cubic', 'mono_constraint': 'M3'}, 32, 'M3'),
+    ('quartic, M4', {'approx_order': 'quartic', 'mono_constraint': 'M4'}, 44, 'M4'),
 ]
 
 OCTAVE = r"""
@@ -87,7 +88,7 @@ def main():
             y.tofile(workdir / 'y.bin')
             for name, opts, appord, constr in SETTINGS:
                 ob, od = octave_build(original, workdir, n, m, appord, constr, args.repeats)
-                pb = best_of(lambda: PchipInterpolator(x, y, **opts), args.repeats)
+                pb = best_of(partial(PchipInterpolator, x, y, **opts), args.repeats)
                 pd = PchipInterpolator(x, y, **opts).c[2].reshape(od.shape)
                 diff = np.max(np.abs(pd - od)) / np.max(np.abs(od))
                 print(f'{label:>26} {name:>12}: Octave {ms(ob)} ms, Pchips {ms(pb)} ms '
