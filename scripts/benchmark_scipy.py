@@ -1,9 +1,10 @@
 """Time Pchips against SciPy's PchipInterpolator, for the Performance section of the README.
 
 Construction is timed for each case, with Pchips' default settings and with the quartic
-approximation and the M4 constraint. Evaluation is timed separately, at 100,000 points: both
-interpolants are CubicHermiteSplines, so it should take the same time. Each time is the best
-of several runs.
+approximation and the M4 constraint, on samples of sin(x) on [0, 10] and, for the multi-column
+case, standard normal values on [0, 1]. Evaluation is timed separately, at 100,000 points:
+both interpolants are CubicHermiteSplines, so it should take the same time. Each time is the
+best of several runs, each of which repeats the call enough times to take about 0.3 s.
 
 Usage: uv run python scripts/benchmark_scipy.py [--repeats N]
 """
@@ -28,8 +29,18 @@ CASES = [
 EVAL_POINTS = 100_000
 
 
-def best_of(f, repeats):
-    return min(timeit.repeat(f, number=1, repeat=repeats))
+def dataset(n, m):
+    """Samples of sin(x) on [0, 10] for a single column, standard normal values on [0, 1] for
+    several, as in the README's Performance section."""
+    if m == 1:
+        x = np.linspace(0, 10, n)
+        return x, np.sin(x)
+    return np.linspace(0, 1, n), np.random.default_rng(0).normal(size=(n, m))
+
+
+def best_of(f, repeats, budget=0.3):
+    number = max(1, int(budget / max(timeit.timeit(f, number=1), 1e-6)))
+    return min(timeit.repeat(f, number=number, repeat=repeats)) / number
 
 
 def ms(t):
@@ -43,13 +54,9 @@ def main():
     print(f'Python {platform.python_version()}, NumPy {np.__version__}, '
           f'SciPy {scipy.__version__}, best of {args.repeats} runs')
 
-    rng = np.random.default_rng(0)
     print('\nConstruction:')
     for label, n, m in CASES:
-        x = np.linspace(0, 2 * np.pi, n)
-        y = np.sin(x[:, None] + rng.uniform(0, 2 * np.pi, m))
-        if m == 1:
-            y = y[:, 0]
+        x, y = dataset(n, m)
         ts = best_of(lambda: ScipyPchip(x, y), args.repeats)
         td = best_of(lambda: PchipInterpolator(x, y), args.repeats)
         tq = best_of(lambda: PchipInterpolator(x, y, approx_order='quartic',
@@ -57,9 +64,8 @@ def main():
         print(f'{label:>26}: SciPy {ms(ts)} ms, Pchips default {ms(td)} ms '
               f'({td / ts:.1f}x slower), quartic and M4 {ms(tq)} ms ({tq / ts:.1f}x slower)')
 
-    x = np.linspace(0, 2 * np.pi, 1_000)
-    y = np.sin(x)
-    u = np.sort(rng.uniform(0, 2 * np.pi, EVAL_POINTS))
+    x, y = dataset(1_000, 1)
+    u = np.linspace(0, 10, EVAL_POINTS)
     s, p = ScipyPchip(x, y), PchipInterpolator(x, y)
     print(f'\nEvaluation at {EVAL_POINTS:,} points of a 1,000-point interpolant:')
     for label, f in [('values', lambda i: i(u)), ('derivatives', lambda i: i(u, nu=1))]:

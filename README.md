@@ -180,19 +180,19 @@ In short: switch if your data come from a smooth underlying function and accurac
   - **On rough data it can be large**. In SciPy's `test_overshoot`, which interpolates 20 random values (one of the two expected failures in [test_scipy_suite.py](tests/test_scipy_suite.py)), Pchips leaves the range of the neighbouring samples in 3 of the 19 intervals, by up to 0.50 when the data span 0.86
 
   If that matters, e.g. for probabilities, concentrations or anything passed to `log`, stay with SciPy or clip the result
-- **Construction is 1.5-3 times slower** (see below). This only matters if you build interpolators in a hot loop
+- **Construction is 1.3-3 times slower** (see below). This only matters if you build interpolators in a hot loop
 - **Rough or noisy data gain little**, since the higher accuracy relies on the data being smooth
 
 ### Performance
 
-Evaluating the interpolant, along with its derivatives and integrals, is exactly as fast as SciPy's, since both use the same `CubicHermiteSpline` code: about 0.5 ms for 100,000 points. Construction does more work, because Huynh's method uses higher-order divided differences and a more elaborate monotonicity constraint. Construction times for samples of $\sin(x)$ on $[0, 2\pi]$, best of 7 runs on an Apple M3 Max with Python 3.13, NumPy 2.3 and SciPy 1.16, with the slowdown relative to SciPy in brackets:
+Evaluating the interpolant, along with its derivatives and integrals, is exactly as fast as SciPy's, since both use the same `CubicHermiteSpline` code: about 0.5 ms for 100,000 points. Construction does more work, because Huynh's method uses higher-order divided differences and a more elaborate monotonicity constraint. Construction times for samples of $\sin(x)$ on $[0, 10]$ (and, with several columns, standard normal values on $[0, 1]$), best of 7 runs on an Apple M3 Max with Python 3.13, NumPy 2.3 and SciPy 1.16, with the slowdown relative to SciPy in brackets:
 
 | Data | SciPy | Pchips (default) | Pchips (`approx_order='quartic'`, `mono_constraint='M4'`) |
 | --- | --- | --- | --- |
-| 20&nbsp;points | 0.05&nbsp;ms | 0.08&nbsp;ms&nbsp;(1.5×&nbsp;slower) | 0.11&nbsp;ms&nbsp;(2.0×&nbsp;slower) |
-| 1,000&nbsp;points | 0.06&nbsp;ms | 0.10&nbsp;ms&nbsp;(1.6×&nbsp;slower) | 0.14&nbsp;ms&nbsp;(2.2×&nbsp;slower) |
-| 100,000&nbsp;points | 1.2&nbsp;ms | 2.2&nbsp;ms&nbsp;(1.9×&nbsp;slower) | 3.6&nbsp;ms&nbsp;(3.1×&nbsp;slower) |
-| 50&nbsp;points&nbsp;×&nbsp;1,000&nbsp;columns | 0.6&nbsp;ms | 1.0&nbsp;ms&nbsp;(1.6×&nbsp;slower) | 1.7&nbsp;ms&nbsp;(2.7×&nbsp;slower) |
+| 20&nbsp;points | 0.05&nbsp;ms | 0.08&nbsp;ms&nbsp;(1.6×&nbsp;slower) | 0.11&nbsp;ms&nbsp;(2.2×&nbsp;slower) |
+| 1,000&nbsp;points | 0.06&nbsp;ms | 0.10&nbsp;ms&nbsp;(1.6×&nbsp;slower) | 0.14&nbsp;ms&nbsp;(2.3×&nbsp;slower) |
+| 100,000&nbsp;points | 1.3&nbsp;ms | 2.3&nbsp;ms&nbsp;(1.8×&nbsp;slower) | 3.7&nbsp;ms&nbsp;(2.9×&nbsp;slower) |
+| 50&nbsp;points&nbsp;×&nbsp;1,000&nbsp;columns | 0.9&nbsp;ms | 1.1&nbsp;ms&nbsp;(1.3×&nbsp;slower) | 1.7&nbsp;ms&nbsp;(1.9×&nbsp;slower) |
 
 ## Mathematical background
 
