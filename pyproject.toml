@@ -40,6 +40,9 @@ Issues = "https://github.com/vglazer/pchips/issues"
 dev = [
     "pytest>=7",
     "matplotlib>=3.5",
+    "nbformat>=5",
+    "nbclient>=0.10",
+    "ipykernel>=6",
 ]
 
 [tool.hatch.build.targets.wheel]
