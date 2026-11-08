@@ -141,6 +141,10 @@ Evaluating the interpolant, along with its derivatives and integrals, is exactly
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for setting up, testing, the scripts and releasing.
 
+## Porting notes
+
+Pchips is a port of an earlier MATLAB implementation. See [PORTING.md](PORTING.md) for how it was produced, how it is tested against the original and how their speeds compare.
+
 ## Citation
 
 If you use Pchips in published work, please cite Huynh's paper:
