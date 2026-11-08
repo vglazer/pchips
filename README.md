@@ -139,7 +139,7 @@ Why:
 
 - **Quartic is more accurate on well-resolved smooth data**. Both give an $O(h^4)$ interpolant, but the quartic derivative approximation has a smaller error constant. With 321 samples, the maximum error is 3.9e-10 instead of 5.8e-9 for $\sin(x)$, and 4.2e-9 instead of 5.8e-8 for $e^{-x^2}$
 - **Cubic can be more accurate on coarse data**. The quartic approximation uses five neighbouring samples instead of four, so it relies on the data being smooth over a wider stencil. With only 11 samples of $e^{-x^2}$ on $[-3, 3]$, the maximum error is 5.2e-2 with quartic and 3.6e-2 with cubic, and the same happens with a steep $\tanh(5x)$ and Runge's function
-- **Quartic is about 10% slower to construct**
+- **Quartic is about 5% slower to construct**
 
 ### Choosing between M3 and M4
 
@@ -150,7 +150,7 @@ Why:
 - **On most data the two are identical**. For smooth, well-sampled data the constraint only kicks in near points where the slope of the data is close to zero. At peaks and troughs both constraints relax in the same way, which is what gives Pchips its accuracy there. On $\sin$, $e^{-x^2}$, $\tanh$, Runge's function and others, M3 and M4 give exactly the same interpolant
 - **M4 is more accurate at flat inflection points**. M3 guarantees monotonicity by keeping the derivative at each sample between 0 and a bound computed from the neighbouring data: 3 times the smaller of the neighbouring slopes, or 1.5 times a local parabola's slope if that is larger. Near a flat inflection point, both are tiny, so this clips the derivatives and accuracy drops to roughly $O(h^3)$, and erratically so. M4 uses extra information from neighbouring cubics to allow larger derivatives there and stays $O(h^4)$. For $x - \sin(x)$ on $[-2, 3.1]$ with 641 samples, the maximum error is 7.1e-10 with M3 and 1.0e-10 with M4 (see `test_m4_fourth_order_at_flat_inflection` in [test_vs_scipy.py](tests/test_vs_scipy.py)). For $x^3$, M4 is exact while M3 is not. If the flat point happens to be one of the samples, the two agree again
 - **M4 weakens the monotonicity guarantee**. Fourth-order accuracy is incompatible with monotonicity in general: there are monotone data which lie on a non-monotone cubic, and M4 reproduces the cubic. Huynh therefore only guarantees a monotone interpolant where the data are "q-monotone" (Theorem 3 in the paper), and in the two intervals at either end. On rough monotone data this matters: in 300 random monotone datasets, M4 gave an interpolant which decreases somewhere in 82 (equally spaced samples) and 141 (unequally spaced samples) of them, while M3 never did
-- **M4 is about 1.4-1.6 times slower to construct**
+- **M4 is about 1.3-1.6 times slower to construct**
 
 So if your data are noisy or irregular, or a monotone result is a hard requirement, stick with M3. If they are smooth and you need the extra accuracy near flat inflection points, use M4, and check the result for monotonicity if that matters.
 
@@ -180,19 +180,19 @@ In short: switch if your data come from a smooth underlying function and accurac
   - **On rough data it can be large**. In SciPy's `test_overshoot`, which interpolates 20 random values (one of the two expected failures in [test_scipy_suite.py](tests/test_scipy_suite.py)), Pchips leaves the range of the neighbouring samples in 3 of the 19 intervals, by up to 0.50 when the data span 0.86
 
   If that matters, e.g. for probabilities, concentrations or anything passed to `log`, stay with SciPy or clip the result
-- **Construction is 1.3-3 times slower** (see below). This only matters if you build interpolators in a hot loop
+- **Construction is 1.5-3 times slower** (see below). This only matters if you build interpolators in a hot loop
 - **Rough or noisy data gain little**, since the higher accuracy relies on the data being smooth
 
 ### Performance
 
-Evaluating the interpolant, along with its derivatives and integrals, is exactly as fast as SciPy's, since both use the same `CubicHermiteSpline` code: about 0.5 ms for 100,000 points. Construction does more work, because Huynh's method uses higher-order divided differences and a more elaborate monotonicity constraint. Construction times, best of 7 runs on an Apple M3 Max with Python 3.13, NumPy 2.3 and SciPy 1.16, with the slowdown relative to SciPy in brackets:
+Evaluating the interpolant, along with its derivatives and integrals, is exactly as fast as SciPy's, since both use the same `CubicHermiteSpline` code: about 0.5 ms for 100,000 points. Construction does more work, because Huynh's method uses higher-order divided differences and a more elaborate monotonicity constraint. Construction times for samples of $\sin(x)$ on $[0, 2\pi]$, best of 7 runs on an Apple M3 Max with Python 3.13, NumPy 2.3 and SciPy 1.16, with the slowdown relative to SciPy in brackets:
 
 | Data | SciPy | Pchips (default) | Pchips (`approx_order='quartic'`, `mono_constraint='M4'`) |
 | --- | --- | --- | --- |
-| 20&nbsp;points | 0.05&nbsp;ms | 0.08&nbsp;ms&nbsp;(1.6×&nbsp;slower) | 0.11&nbsp;ms&nbsp;(2.2×&nbsp;slower) |
-| 1,000&nbsp;points | 0.06&nbsp;ms | 0.10&nbsp;ms&nbsp;(1.6×&nbsp;slower) | 0.14&nbsp;ms&nbsp;(2.3×&nbsp;slower) |
-| 100,000&nbsp;points | 1.3&nbsp;ms | 2.3&nbsp;ms&nbsp;(1.8×&nbsp;slower) | 3.7&nbsp;ms&nbsp;(2.9×&nbsp;slower) |
-| 50&nbsp;points&nbsp;×&nbsp;1,000&nbsp;columns | 0.9&nbsp;ms | 1.1&nbsp;ms&nbsp;(1.3×&nbsp;slower) | 1.7&nbsp;ms&nbsp;(1.9×&nbsp;slower) |
+| 20&nbsp;points | 0.05&nbsp;ms | 0.08&nbsp;ms&nbsp;(1.5×&nbsp;slower) | 0.11&nbsp;ms&nbsp;(2.0×&nbsp;slower) |
+| 1,000&nbsp;points | 0.06&nbsp;ms | 0.10&nbsp;ms&nbsp;(1.6×&nbsp;slower) | 0.14&nbsp;ms&nbsp;(2.2×&nbsp;slower) |
+| 100,000&nbsp;points | 1.2&nbsp;ms | 2.2&nbsp;ms&nbsp;(1.9×&nbsp;slower) | 3.6&nbsp;ms&nbsp;(3.1×&nbsp;slower) |
+| 50&nbsp;points&nbsp;×&nbsp;1,000&nbsp;columns | 0.6&nbsp;ms | 1.0&nbsp;ms&nbsp;(1.6×&nbsp;slower) | 1.7&nbsp;ms&nbsp;(2.7×&nbsp;slower) |
 
 ## Mathematical background
 
