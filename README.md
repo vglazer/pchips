@@ -1,5 +1,8 @@
 # Pchips
 
+[![Tests](https://github.com/vglazer/pchips/actions/workflows/tests.yml/badge.svg)](https://github.com/vglazer/pchips/actions/workflows/tests.yml)
+[![PyPI](https://img.shields.io/pypi/v/pchips)](https://pypi.org/project/pchips/)
+
 ![sin(x) from 11 samples: SciPy cuts the peak off flat, Pchips follows it](assets/preserving_vs_imposing.png)
 
 ## Overview
