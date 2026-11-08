@@ -7,9 +7,13 @@
 
 ## Overview
 
-This is a Python port, produced using [Gemini CLI](https://github.com/google-gemini/gemini-cli) in an afternoon, of the accurate monotone cubic interpolant [originally implemented in MATLAB here](https://github.com/vglazer/USRA/tree/master/interpolation). It was then refined using [Claude Code](https://claude.com/claude-code): checked against Huynh's paper (which turned up and fixed two bugs in the M4 constraint inherited from the MATLAB original), turned into a drop-in replacement for SciPy's [PchipInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html), vectorized, and given a more thorough test suite.
+Pchips is a **monotonicity-preserving piecewise cubic Hermite interpolant** that is **fourth-order accurate, including at peaks and troughs**. It is a drop-in replacement for SciPy's [PchipInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.html).
 
-All the logic is in [interpolate.py](src/pchips/interpolate.py). The [tests](tests) compare it to SciPy, check the guarantees from Huynh's paper and generate comparison plots. [test_scipy_suite.py](tests/test_scipy_suite.py) runs SciPy's own `PchipInterpolator` tests against it.
+Classical monotone Hermite interpolants, SciPy's included, _impose_ monotonicity: they flatten the interpolant at every local maximum and minimum, which cuts peaks off and limits them to $O(h^2)$ accuracy. Pchips only _preserves_ monotonicity: where the data are monotone, so is the interpolant, but the constraint is relaxed near strict local extrema, so the interpolant follows the data through them and stays $O(h^4)$ accurate.
+
+- **Cubic or quartic derivative approximations**. The derivatives at the samples can be estimated with a cubic approximation (the default) or a quartic one, which has a smaller error constant on smooth, well-resolved data. Both give an $O(h^4)$ interpolant
+- **Two monotonicity constraints**. M3 (the default) guarantees a monotone interpolant on monotone data. M4 stays $O(h^4)$ even at flat inflection points, where M3 may drop to $O(h^3)$, at the cost of a weaker monotonicity guarantee
+- **A one-line switch from SciPy**. Same signature, same methods (derivatives, integrals, roots, extrapolation), and SciPy's own `PchipInterpolator` tests pass, apart from one that checks the interpolant never overshoots and one that checks the exact values of SciPy's method
 
 The algorithm, due to [H. T. Huynh](https://scholar.google.com/citations?user=ZXhGCtwAAAAJ&hl=en), is described in this [NASA Technical Memo](https://ntrs.nasa.gov/citations/19910011517), which is self-contained and quite readable. A nearly identical version was later published in the [SIAM Journal on Numerical Analysis](https://epubs.siam.org/doi/10.1137/0730004).
 
