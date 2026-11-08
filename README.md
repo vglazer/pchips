@@ -224,6 +224,8 @@ To release a new version:
 - [Create a release](https://github.com/vglazer/pchips/releases/new) on GitHub with a new tag `v` followed by that version, e.g. `v1.0.2`
 - The [publish workflow](.github/workflows/publish.yml) then runs the tests, builds the package and publishes it to PyPI
 
+To rehearse a release, run the publish workflow by hand (Actions > Publish to PyPI > Run workflow). It publishes a development release such as `1.0.2.dev7` to [TestPyPI](https://test.pypi.org/project/pchips/) instead.
+
 ## Citation
 
 If you use Pchips in published work, please cite Huynh's paper:

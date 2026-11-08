@@ -1,10 +1,21 @@
 name: Publish to PyPI
 
-# Runs when a release is published on GitHub. The release's tag must be "v" followed
-# by the version in pyproject.toml, e.g. v1.0.2.
+# Runs the tests, builds the package and publishes it with PyPI Trusted Publishing (no stored tokens).
+#
+# - To release: bump the version in pyproject.toml, then create a release on GitHub
+#   (https://github.com/vglazer/pchips/releases/new) with a new tag "v" followed by that version,
+#   e.g. v1.0.3. Publishing the release publishes to PyPI.
+# - To rehearse: run it by hand (Actions > Publish to PyPI > Run workflow), which publishes to
+#   TestPyPI. Each rehearsal publishes its own development release, VERSION.devN with N the run
+#   number, since an index accepts each version only once.
+#
+# One-time setup: add this repository as a trusted publisher on pypi.org and test.pypi.org
+# (owner vglazer, repository pchips, workflow publish.yml, environment pypi or testpypi).
 on:
   release:
     types: [published]
+  # a rehearsal that publishes to TestPyPI
+  workflow_dispatch:
 
 jobs:
   test:
@@ -17,6 +28,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.3
       - name: Check that the version matches the release tag
+        if: github.event_name == 'release'
         env:
           TAG: ${{ github.event.release.tag_name }}
         run: |
@@ -25,6 +37,22 @@ jobs:
             echo "::error::pyproject.toml has version $version, but the release tag is $TAG"
             exit 1
           fi
+      - name: Give a TestPyPI rehearsal its own version (VERSION.devRUN)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          RUN: ${{ github.run_number }}
+        run: |
+          python3 - <<'EOF'
+          import os, re
+          from pathlib import Path
+          path = Path("pyproject.toml")
+          text, n = re.subn(r'^version = "([^"]+)"', lambda m: f'version = "{m[1]}.dev{os.environ["RUN"]}"',
+                            path.read_text(encoding="utf-8"), count=1, flags=re.MULTILINE)
+          if n != 1:
+              raise SystemExit("no version = \"...\" in pyproject.toml")
+          path.write_text(text, encoding="utf-8")
+          EOF
+          grep -m1 '^version = ' pyproject.toml
       - name: Build
         run: uv build
       - name: Check
@@ -37,10 +65,11 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
-    # Must match the environment name in PyPI's trusted publisher settings
+    name: Publish to ${{ github.event_name == 'release' && 'PyPI' || 'TestPyPI' }}
+    # Must match the environment names in the trusted publisher settings on pypi.org and test.pypi.org
     environment:
-      name: pypi
-      url: https://pypi.org/project/pchips/
+      name: ${{ github.event_name == 'release' && 'pypi' || 'testpypi' }}
+      url: ${{ github.event_name == 'release' && 'https://pypi.org/project/pchips/' || 'https://test.pypi.org/project/pchips/' }}
     permissions:
       # Lets PyPI verify that the upload comes from this workflow, so no token is needed
       id-token: write
@@ -49,4 +78,11 @@ jobs:
         with:
           name: dist
           path: dist/
-      - uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Publish to TestPyPI
+        if: github.event_name == 'workflow_dispatch'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+      - name: Publish to PyPI
+        if: github.event_name == 'release'
+        uses: pypa/gh-action-pypi-publish@release/v1
