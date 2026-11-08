@@ -43,8 +43,10 @@ dev = [
     "nbformat>=5",
     "nbclient>=0.10",
     "ipykernel>=6",
-    "ruff==0.17.4",
+    {include-group = "lint"},
 ]
+# Just ruff, so that CI can lint without installing anything else
+lint = ["ruff==0.17.4"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pchips"]

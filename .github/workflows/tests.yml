@@ -18,8 +18,8 @@ jobs:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.3
       - name: Ruff
-        # The version locked in uv.lock, from the dev dependencies
-        run: uv run ruff check .
+        # Only the lint group: ruff at the version locked in uv.lock
+        run: uv run --only-group lint ruff check .
 
   test:
     name: ${{ matrix.name }}
