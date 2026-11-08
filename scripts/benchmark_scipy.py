@@ -6,7 +6,9 @@ case, standard normal values on [0, 1]. Evaluation is timed separately, at 100,0
 both interpolants are CubicHermiteSplines, so it should take the same time. Each time is the
 best of several runs, each of which repeats the call enough times to take about 0.3 s.
 
-Usage: uv run python scripts/benchmark_scipy.py [--repeats N]
+--quick runs only small cases, once each, to check that the script works.
+
+Usage: uv run python scripts/benchmark_scipy.py [--repeats N] [--quick]
 """
 
 import argparse
@@ -26,6 +28,11 @@ CASES = [
     ('1,000 points', 1_000, 1),
     ('100,000 points', 100_000, 1),
     ('50 points × 1,000 columns', 50, 1_000),
+]
+# Small cases for --quick
+QUICK_CASES = [
+    ('20 points', 20, 1),
+    ('50 points × 10 columns', 50, 10),
 ]
 EVAL_POINTS = 100_000
 
@@ -51,17 +58,21 @@ def ms(t):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument('--repeats', type=int, default=7)
+    parser.add_argument('--quick', action='store_true', help='only small cases, run once each')
     args = parser.parse_args()
+    cases, budget = (QUICK_CASES, 0) if args.quick else (CASES, 0.3)
+    if args.quick:
+        args.repeats = 1
     print(f'Python {platform.python_version()}, NumPy {np.__version__}, '
           f'SciPy {scipy.__version__}, best of {args.repeats} runs')
 
     print('\nConstruction:')
-    for label, n, m in CASES:
+    for label, n, m in cases:
         x, y = dataset(n, m)
-        ts = best_of(partial(ScipyPchip, x, y), args.repeats)
-        td = best_of(partial(PchipInterpolator, x, y), args.repeats)
+        ts = best_of(partial(ScipyPchip, x, y), args.repeats, budget)
+        td = best_of(partial(PchipInterpolator, x, y), args.repeats, budget)
         tq = best_of(partial(PchipInterpolator, x, y, approx_order='quartic',
-                             mono_constraint='M4'), args.repeats)
+                             mono_constraint='M4'), args.repeats, budget)
         print(f'{label:>26}: SciPy {ms(ts)} ms, Pchips default {ms(td)} ms '
               f'({td / ts:.1f}x slower), quartic and M4 {ms(tq)} ms ({tq / ts:.1f}x slower)')
 
@@ -70,8 +81,8 @@ def main():
     s, p = ScipyPchip(x, y), PchipInterpolator(x, y)
     print(f'\nEvaluation at {EVAL_POINTS:,} points of a 1,000-point interpolant:')
     for label, f in [('values', lambda i: i(u)), ('derivatives', lambda i: i(u, nu=1))]:
-        print(f'{label:>26}: SciPy {ms(best_of(partial(f, s), args.repeats))} ms, '
-              f'Pchips {ms(best_of(partial(f, p), args.repeats))} ms')
+        print(f'{label:>26}: SciPy {ms(best_of(partial(f, s), args.repeats, budget))} ms, '
+              f'Pchips {ms(best_of(partial(f, p), args.repeats, budget))} ms')
 
 
 if __name__ == '__main__':
