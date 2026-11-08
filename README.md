@@ -222,6 +222,11 @@ Evaluating the interpolant, along with its derivatives and integrals, is exactly
 - `uv run pytest`
 - Check out the comparison plots in the `plots` subdirectory
 
+```sh
+uv run python scripts/make_gallery.py      # redraw the README plots
+uv run python scripts/benchmark_usra.py    # time against the MATLAB original (needs Octave and vglazer/USRA)
+```
+
 To release a new version:
 
 - Bump `version` in [pyproject.toml](pyproject.toml), then commit and push
