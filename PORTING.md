@@ -50,6 +50,7 @@ largest derivative. The M4 bug fixes don't come into play on these data.
 Octave runs loops in its interpreter. MATLAB compiles them just in time, so the original would
 probably run faster there. These numbers measure it under Octave only.
 [benchmark_usra.py](scripts/benchmark_usra.py) produces these numbers: run
-`uv run python scripts/benchmark_usra.py`, with Octave on your `PATH` and
-[vglazer/USRA](https://github.com/vglazer/USRA) cloned next to this repository (or pass `--usra`
-with the path to its `interpolation/hermite` directory).
+`uv run python scripts/benchmark_usra.py`, with Octave on your `PATH` and the
+[USRA repository on GitHub](https://github.com/vglazer/USRA/tree/master/interpolation), which holds
+the original, cloned next to this one (or pass `--usra` with the path to its
+`interpolation/hermite` directory).
