@@ -224,6 +224,7 @@ Evaluating the interpolant, along with its derivatives and integrals, is exactly
 
 ```sh
 uv run python scripts/make_gallery.py      # redraw the README plots
+uv run python scripts/benchmark_scipy.py   # time against SciPy (the Performance section)
 uv run python scripts/benchmark_usra.py    # time against the MATLAB original (needs Octave and vglazer/USRA)
 ```
 
